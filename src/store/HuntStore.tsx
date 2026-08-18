@@ -7,13 +7,15 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import Papa from "papaparse";
+import { supabase } from "../lib/supabase";
 import {
   codesMatch,
   judgeCodeMatch,
   phonesMatch,
-  transformTeam,
-  transformVenue,
+  mapDbTeam,
+  mapTeamToDb,
+  mapDbVenue,
+  mapVenueToDb,
   type Team,
   type Venue,
 } from "../data/schema";
@@ -28,14 +30,17 @@ export type CodeCheckResult =
 
 interface HuntContextValue {
   teams: Team[];
-  venues: Venue[];
+  venues: Venue[]; // Full list for Judge
+  currentClue: Venue | null; // Single secure clue for Participant
   loading: boolean;
+  totalVenuesCount: number;
   getTeam: (teamId: string) => Team | undefined;
   loginByLeaderPhone: (phone: string) => Team | null;
   loginJudge: (accessCode: string) => boolean;
   ensureStarted: (teamId: string) => void;
   checkClueCode: (teamId: string, code: string) => CodeCheckResult;
   confirmAndAdvance: (teamId: string) => VerifyResult;
+  refreshCurrentClue: (levelIndex: number) => Promise<void>;
   // --- God Mode Ops ---
   updateTeamDetails: (teamId: string, teamName: string, leaderName: string, leaderPhone: string, members: string[]) => void;
   addTeam: (team: Team) => void;
@@ -53,91 +58,84 @@ const HuntContext = createContext<HuntContextValue | null>(null);
 
 export function HuntProvider({ children }: { children: ReactNode }) {
   const [teams, setTeams] = useState<Team[]>([]);
-  const [venues, setVenues] = useState<Venue[]>([]);
+  const [venues, setVenues] = useState<Venue[]>([]); // Only populated for Judge
+  const [currentClue, setCurrentClue] = useState<Venue | null>(null); // Only one for Participant
+  const [totalVenuesCount, setTotalVenuesCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isJudgeSession, setIsJudgeSession] = useState(false);
 
+  // 1. Initial Load (Teams and Metadata only)
   useEffect(() => {
-    const loadData = async () => {
+    const fetchInitial = async () => {
+      setLoading(true);
       try {
-        const [teamsRes, venuesRes] = await Promise.all([
-          fetch("/data/teams.csv"),
-          fetch("/data/venues.csv"),
-        ]);
+        const { data: teamsData } = await supabase.from('teams').select('*');
+        const { count } = await supabase.from('venues').select('*', { count: 'exact', head: true });
 
-        const teamsText = await teamsRes.text();
-        const venuesText = await venuesRes.text();
-
-        const teamsParsed = Papa.parse(teamsText, { header: true, skipEmptyLines: true });
-        const venuesParsed = Papa.parse(venuesText, { header: true, skipEmptyLines: true });
-
-        const rawTeams = teamsParsed.data.map(transformTeam);
-        const rawVenues = venuesParsed.data.map(transformVenue);
-
-        // Merge with localStorage progress and overrides if exists
-        const savedProgress = localStorage.getItem("fh_teams_progress");
-        const savedVenues = localStorage.getItem("fh_venues_overrides");
-
-        if (savedVenues) {
-          setVenues(JSON.parse(savedVenues));
-        } else {
-          setVenues(rawVenues);
-        }
-
-        if (savedProgress) {
-          const progressMap = JSON.parse(savedProgress);
-          const mergedTeams = rawTeams.map(t => ({
-            ...t,
-            ...(progressMap[t.teamId] || {})
-          }));
-          // Add any teams that were added manually (not in CSV)
-          Object.keys(progressMap).forEach(id => {
-            if (!rawTeams.find(rt => rt.teamId === id)) {
-              mergedTeams.push({
-                teamId: id,
-                ...progressMap[id]
-              });
-            }
-          });
-          setTeams(mergedTeams);
-        } else {
-          setTeams(rawTeams);
-        }
+        if (teamsData) setTeams(teamsData.map(mapDbTeam));
+        if (count !== null) setTotalVenuesCount(count);
       } catch (error) {
-        console.error("Failed to load CSV data:", error);
+        console.error("Supabase load error:", error);
       } finally {
         setLoading(false);
       }
     };
-
-    loadData();
+    fetchInitial();
   }, []);
 
-  // Sync to localStorage whenever teams change
-  useEffect(() => {
-    if (teams.length > 0) {
-      const progressMap = teams.reduce((acc, t) => {
-        acc[t.teamId] = {
-          teamName: t.teamName,
-          leaderName: t.leaderName,
-          leaderPhone: t.leaderPhone,
-          members: t.members,
-          currentLevelIndex: t.currentLevelIndex,
-          lastCompletionAt: t.lastCompletionAt,
-          startedAt: t.startedAt,
-          finishedAt: t.finishedAt
-        };
-        return acc;
-      }, {} as any);
-      localStorage.setItem("fh_teams_progress", JSON.stringify(progressMap));
-    }
-  }, [teams]);
+  // 2. Secure Clue Fetcher (For Participants)
+  const refreshCurrentClue = useCallback(async (levelIndex: number) => {
+    // Only fetch the exact venue needed for this level
+    const { data } = await supabase
+      .from('venues')
+      .select('*')
+      .eq('order_id', levelIndex + 1)
+      .single();
 
-  // Sync venues to localStorage
-  useEffect(() => {
-    if (venues.length > 0) {
-      localStorage.setItem("fh_venues_overrides", JSON.stringify(venues));
+    if (data) {
+      setCurrentClue(mapDbVenue(data));
+    } else {
+      setCurrentClue(null);
     }
-  }, [venues]);
+  }, []);
+
+  // 3. Full Sequence Fetcher (For Judge Only)
+  const loadFullSequence = useCallback(async () => {
+    const { data } = await supabase
+      .from('venues')
+      .select('*')
+      .order('order_id', { ascending: true });
+    if (data) setVenues(data.map(mapDbVenue));
+  }, []);
+
+  // Real-time Subscriptions
+  useEffect(() => {
+    const teamsChannel = supabase
+      .channel('teams-all')
+      .on('postgres_changes', { event: '*', table: 'teams' }, (payload) => {
+        if (payload.eventType === 'INSERT') {
+          setTeams(prev => [...prev, mapDbTeam(payload.new)]);
+        } else if (payload.eventType === 'UPDATE') {
+          setTeams(prev => prev.map(t => t.teamId === payload.new.team_id ? mapDbTeam(payload.new) : t));
+        } else if (payload.eventType === 'DELETE') {
+          setTeams(prev => prev.filter(t => t.teamId === payload.old.team_id));
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(teamsChannel);
+    };
+  }, []);
+
+  const loginJudge = useCallback((accessCode: string) => {
+    const ok = judgeCodeMatch(accessCode);
+    if (ok) {
+      setIsJudgeSession(true);
+      loadFullSequence();
+    }
+    return ok;
+  }, [loadFullSequence]);
 
   const getTeam = useCallback(
     (teamId: string) =>
@@ -153,160 +151,114 @@ export function HuntProvider({ children }: { children: ReactNode }) {
     [teams]
   );
 
-  const loginJudge = useCallback((accessCode: string) => {
-    return judgeCodeMatch(accessCode);
-  }, []);
-
-  const ensureStarted = useCallback((teamId: string) => {
-    setTeams((prev) =>
-      prev.map((t) => {
-        if (t.teamId.toUpperCase() !== teamId.trim().toUpperCase()) return t;
-        if (t.startedAt != null) return t;
-        if (t.finishedAt != null) return t;
-        return { ...t, startedAt: Date.now() };
-      })
-    );
-  }, []);
+  const ensureStarted = useCallback(async (teamId: string) => {
+    const team = teams.find(t => t.teamId === teamId);
+    if (!team || team.startedAt) return;
+    await supabase.from('teams').update({ started_at: Date.now() }).eq('team_id', teamId);
+  }, [teams]);
 
   const checkClueCode = useCallback(
     (teamId: string, code: string): CodeCheckResult => {
-      const team = teams.find(
-        (t) => t.teamId.toUpperCase() === teamId.trim().toUpperCase()
-      );
-      if (!team) {
-        return { ok: false, message: "Team not found." };
-      }
-      if (team.finishedAt != null || team.currentLevelIndex >= venues.length) {
-        return { ok: false, message: "This expedition is already complete." };
-      }
+      const team = teams.find((t) => t.teamId === teamId);
+      if (!team) return { ok: false, message: "Team not found." };
 
-      const venue = venues[team.currentLevelIndex];
-      if (!venue) {
-        return { ok: false, message: "No active clue for this team." };
-      }
+      // Use the securely loaded currentClue instead of searching the full list
+      if (!currentClue) return { ok: false, message: "No active clue loaded." };
 
-      if (!codesMatch(code, venue.correctCode)) {
-        return {
-          ok: false,
-          message:
-            "Wrong code. Check the backside of the clue paper and try again.",
-        };
+      if (!codesMatch(code, currentClue.correctCode)) {
+        return { ok: false, message: "Invalid code. Check the paper." };
       }
 
       return { ok: true };
     },
-    [teams, venues]
+    [teams, currentClue]
   );
 
   const confirmAndAdvance = useCallback(
     (teamId: string): VerifyResult => {
-      const team = teams.find(
-        (t) => t.teamId.toUpperCase() === teamId.trim().toUpperCase()
-      );
-      if (!team) {
-        return { ok: false, message: "Team not found." };
-      }
-      if (team.finishedAt != null || team.currentLevelIndex >= venues.length) {
-        return { ok: false, message: "This expedition is already complete." };
-      }
+      const team = teams.find((t) => t.teamId === teamId);
+      if (!team) return { ok: false, message: "Team not found." };
 
       const nextLevel = team.currentLevelIndex + 1;
-      const finished = nextLevel >= venues.length;
+      const finished = nextLevel >= totalVenuesCount;
       const now = Date.now();
 
-      setTeams((prev) =>
-        prev.map((t) => {
-          if (t.teamId !== team.teamId) return t;
-          return {
-            ...t,
-            currentLevelIndex: nextLevel,
-            lastCompletionAt: now,
-            startedAt: t.startedAt ?? now,
-            finishedAt: finished ? now : null,
-          };
+      supabase
+        .from('teams')
+        .update({
+          current_level_index: nextLevel,
+          last_completion_at: now,
+          started_at: team.startedAt ?? now,
+          finished_at: finished ? now : null,
         })
-      );
+        .eq('team_id', teamId)
+        .then();
 
       return { ok: true, finished, nextLevel };
     },
-    [teams, venues]
+    [teams, totalVenuesCount]
   );
 
-  const updateTeamDetails = useCallback((teamId: string, teamName: string, leaderName: string, leaderPhone: string, members: string[]) => {
-    setTeams((prev) =>
-      prev.map((t) =>
-        t.teamId === teamId
-          ? { ...t, teamName, leaderName, leaderPhone, members }
-          : t
-      )
-    );
+  // Admin Ops (God Mode)
+  const updateTeamDetails = useCallback(async (teamId: string, teamName: string, leaderName: string, leaderPhone: string, members: string[]) => {
+    await supabase.from('teams').update({ team_name: teamName, leader_name: leaderName, leader_phone: leaderPhone, members: members }).eq('team_id', teamId);
   }, []);
 
-  const addTeam = useCallback((team: Team) => {
-    setTeams(prev => [...prev, team]);
+  const addTeam = useCallback(async (team: Team) => {
+    await supabase.from('teams').insert([mapTeamToDb(team)]);
   }, []);
 
-  const deleteTeam = useCallback((teamId: string) => {
-    setTeams(prev => prev.filter(t => t.teamId !== teamId));
+  const deleteTeam = useCallback(async (teamId: string) => {
+    await supabase.from('teams').delete().eq('team_id', teamId);
   }, []);
 
-  const setTeamLevel = useCallback((teamId: string, level: number) => {
-    setTeams(prev => prev.map(t =>
-      t.teamId === teamId ? { ...t, currentLevelIndex: level, finishedAt: level >= venues.length ? Date.now() : null } : t
-    ));
-  }, [venues.length]);
+  const setTeamLevel = useCallback(async (teamId: string, level: number) => {
+    await supabase.from('teams').update({ current_level_index: level, finished_at: level >= totalVenuesCount ? Date.now() : null }).eq('team_id', teamId);
+  }, [totalVenuesCount]);
 
-  const addVenue = useCallback((venue: Venue) => {
-    setVenues(prev => [...prev, venue]);
+  const addVenue = useCallback(async (venue: Venue) => {
+    await supabase.from('venues').insert([mapVenueToDb(venue)]);
+    const { count } = await supabase.from('venues').select('*', { count: 'exact', head: true });
+    if (count !== null) setTotalVenuesCount(count);
   }, []);
 
-  const updateVenue = useCallback((venueId: string, updates: Partial<Venue>) => {
-    setVenues(prev => prev.map(v => v.id === venueId ? { ...v, ...updates } : v));
+  const updateVenue = useCallback(async (venueId: string, updates: Partial<Venue>) => {
+    const dbUpdates: any = {};
+    if (updates.name) dbUpdates.name = updates.name;
+    if (updates.hintText) dbUpdates.hint_text = updates.hintText;
+    if (updates.locationLabel) dbUpdates.location_label = updates.locationLabel;
+    if (updates.correctCode) dbUpdates.correct_code = updates.correctCode;
+    await supabase.from('venues').update(dbUpdates).eq('id', venueId);
   }, []);
 
-  const deleteVenue = useCallback((venueId: string) => {
-    setVenues(prev => prev.filter(v => v.id !== venueId));
+  const deleteVenue = useCallback(async (venueId: string) => {
+    await supabase.from('venues').delete().eq('id', venueId);
+    const { count } = await supabase.from('venues').select('*', { count: 'exact', head: true });
+    if (count !== null) setTotalVenuesCount(count);
   }, []);
 
-  const resetTeam = useCallback((teamId: string) => {
-    setTeams((prev) =>
-      prev.map((t) =>
-        t.teamId.toUpperCase() === teamId.trim().toUpperCase()
-          ? {
-              ...t,
-              currentLevelIndex: 0,
-              lastCompletionAt: null,
-              startedAt: null,
-              finishedAt: null,
-            }
-          : t
-      )
-    );
+  const resetTeam = useCallback(async (teamId: string) => {
+    await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null }).eq('team_id', teamId);
   }, []);
 
-  const resetAllProgress = useCallback(() => {
-    setTeams((prev) =>
-      prev.map((t) => ({
-        ...t,
-        currentLevelIndex: 0,
-        lastCompletionAt: null,
-        startedAt: null,
-        finishedAt: null,
-      }))
-    );
+  const resetAllProgress = useCallback(async () => {
+    await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null });
   }, []);
 
   const value = useMemo(
     () => ({
       teams,
       venues,
+      currentClue,
       loading,
+      totalVenuesCount,
       getTeam,
       loginByLeaderPhone,
       loginJudge,
       ensureStarted,
       checkClueCode,
       confirmAndAdvance,
+      refreshCurrentClue,
       updateTeamDetails,
       addTeam,
       deleteTeam,
@@ -318,30 +270,15 @@ export function HuntProvider({ children }: { children: ReactNode }) {
       resetAllProgress,
     }),
     [
-      teams,
-      venues,
-      loading,
-      getTeam,
-      loginByLeaderPhone,
-      loginJudge,
-      ensureStarted,
-      checkClueCode,
-      confirmAndAdvance,
-      updateTeamDetails,
-      addTeam,
-      deleteTeam,
-      setTeamLevel,
-      addVenue,
-      updateVenue,
-      deleteVenue,
-      resetTeam,
-      resetAllProgress,
+      teams, venues, currentClue, loading, totalVenuesCount, getTeam, loginByLeaderPhone,
+      loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
+      updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
+      deleteVenue, resetTeam, resetAllProgress
     ]
   );
 
   return <HuntContext.Provider value={value}>{children}</HuntContext.Provider>;
 }
-
 
 export function useHunt() {
   const ctx = useContext(HuntContext);

@@ -13,7 +13,7 @@ interface ParticipantHomeProps {
 }
 
 export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
-  const { getTeam, venues, ensureStarted, checkClueCode, confirmAndAdvance } =
+  const { getTeam, currentClue, totalVenuesCount, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue } =
     useHunt();
   const team = getTeam(teamId);
 
@@ -37,7 +37,14 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     return () => window.clearInterval(id);
   }, []);
 
-  // New clue → always reset to hint only (never leak place names)
+  // Fetch clue securely on level change
+  useEffect(() => {
+    if (team) {
+      refreshCurrentClue(team.currentLevelIndex);
+    }
+  }, [team?.currentLevelIndex, refreshCurrentClue]);
+
+  // Reset UI on level change
   useEffect(() => {
     setPhase("hint");
     setCode("");
@@ -66,17 +73,16 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     );
   }
 
-  const totalVenues = venues.length;
   const finished =
-    team.finishedAt != null || team.currentLevelIndex >= totalVenues;
-  const venue = venues[team.currentLevelIndex];
-  const clueNumber = Math.min(team.currentLevelIndex + 1, totalVenues);
-  const cleared = Math.min(team.currentLevelIndex, totalVenues);
+    team.finishedAt != null || team.currentLevelIndex >= totalVenuesCount;
+  const venue = currentClue;
+  const clueNumber = team.currentLevelIndex + 1;
+  const cleared = team.currentLevelIndex;
   const elapsedMs = team.startedAt
     ? (team.finishedAt ?? now) - team.startedAt
     : 0;
-  const progressPct = (cleared / totalVenues) * 100;
-  const isLast = team.currentLevelIndex >= totalVenues - 1;
+  const progressPct = (cleared / Math.max(totalVenuesCount, 1)) * 100;
+  const isLast = team.currentLevelIndex >= totalVenuesCount - 1;
 
   const flashError = (msg: string) => {
     setError(msg);
@@ -125,7 +131,6 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
       return;
     }
 
-    // Level change effect resets UI to the next hint (no place name).
     advanceTimer.current = window.setTimeout(() => {
       setAdvancing(false);
     }, 400);
@@ -179,7 +184,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               Clues
             </p>
             <p className="font-mono mt-2 text-2xl font-semibold tabular-nums text-violet">
-              {totalVenues}/{totalVenues}
+              {totalVenuesCount}/{totalVenuesCount}
             </p>
           </div>
         </div>
@@ -187,7 +192,16 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     );
   }
 
-  if (!venue) return null;
+  if (!venue) {
+    return (
+      <div className="flex min-h-dvh items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-cyan border-t-transparent mx-auto" />
+          <p className="font-mono text-xs text-cyan animate-pulse">Decrypting Clue...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7">
@@ -430,4 +444,3 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     </div>
   );
 }
-

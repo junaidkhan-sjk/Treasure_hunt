@@ -1,30 +1,24 @@
 import SHA256 from "crypto-js/sha256";
 
 /**
- * Field Hunt — in-memory data schema
+ * Field Hunt — Database Schema
  */
-// ... (rest of interfaces)
 
 export interface Venue {
   id: string;
   orderId: number;
-  /** Internal / judge-only label */
   name: string;
   locationLabel: string;
-  /** Riddle shown to participants (no place name spoiler as a title) */
   hintText: string;
   venueImageUrl: string;
   correctCode: string;
-  /** Volunteer name teams must enter to unlock the photo check */
   coordinatorName: string;
-  /** Short instruction without naming the venue */
   taskNote: string;
 }
 
 export interface Team {
   teamId: string;
   teamName: string;
-  /** First member is treated as leader; phone gates team login */
   leaderName: string;
   leaderPhone: string;
   members: string[];
@@ -34,12 +28,10 @@ export interface Team {
   finishedAt: number | null;
 }
 
-/** Secret code for judge / developer monitor access (not shown in participant UI) */
 export const JUDGE_ACCESS_CODE = "9301900147";
 
 export type ParticipantPhase = "hint" | "confirm";
 
-/** Keep digits only; compare last 10 for +91 / local formats */
 export function normalizePhone(value: string): string {
   const digits = value.replace(/\D/g, "");
   if (digits.length >= 10) return digits.slice(-10);
@@ -54,7 +46,6 @@ export function phonesMatch(input: string, expected: string): boolean {
 
 export function judgeCodeMatch(input: string): boolean {
   const hashedInput = SHA256(input.trim().toUpperCase()).toString();
-  // SHA256 of "9301900147"
   const expectedHash = "5ea01e438e99a9f9e2a3069df84bcb50d165351d2ded73f06af3ef73027a4c30";
   return hashedInput === expectedHash;
 }
@@ -66,45 +57,69 @@ export function normalizeKey(value: string): string {
 export function codesMatch(input: string, expected: string): boolean {
   const normalizedInput = normalizeKey(input).replace(/[-\s]/g, "");
   const hashedInput = SHA256(normalizedInput).toString();
-
-  // The 'expected' in our CSV will now be a HASH instead of plain text
   return hashedInput === expected;
-}
-
-export function namesMatch(input: string, expected: string): boolean {
-  return normalizeKey(input) === normalizeKey(expected);
 }
 
 export function padStop(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-/** Transform CSV row to Team object */
-export function transformTeam(row: any): Team {
+/** Map Supabase fields to Team object */
+export function mapDbTeam(row: any): Team {
   return {
-    teamId: row.teamId,
-    teamName: row.teamName,
-    leaderName: row.leaderName,
-    leaderPhone: row.leaderPhone,
-    members: row.members ? row.members.split(",").map((m: string) => m.trim()) : [],
-    currentLevelIndex: 0,
-    lastCompletionAt: null,
-    startedAt: null,
-    finishedAt: null,
+    teamId: row.team_id,
+    teamName: row.team_name,
+    leaderName: row.leader_name,
+    leaderPhone: row.leader_phone,
+    members: row.members || [],
+    currentLevelIndex: row.current_level_index || 0,
+    lastCompletionAt: row.last_completion_at ? Number(row.last_completion_at) : null,
+    startedAt: row.started_at ? Number(row.started_at) : null,
+    finishedAt: row.finished_at ? Number(row.finished_at) : null,
   };
 }
 
-/** Transform CSV row to Venue object */
-export function transformVenue(row: any): Venue {
+/** Map Team object to Supabase fields */
+export function mapTeamToDb(team: Team) {
+  return {
+    team_id: team.teamId,
+    team_name: team.teamName,
+    leader_name: team.leaderName,
+    leader_phone: team.leaderPhone,
+    members: team.members,
+    current_level_index: team.currentLevelIndex,
+    last_completion_at: team.lastCompletionAt,
+    started_at: team.startedAt,
+    finished_at: team.finishedAt,
+  };
+}
+
+/** Map Supabase fields to Venue object */
+export function mapDbVenue(row: any): Venue {
   return {
     id: row.id,
-    orderId: parseInt(row.orderId, 10),
+    orderId: row.order_id,
     name: row.name,
-    locationLabel: row.locationLabel,
-    hintText: row.hintText,
-    venueImageUrl: row.venueImageUrl,
-    correctCode: row.correctCode,
-    coordinatorName: row.coordinatorName,
-    taskNote: row.taskNote,
+    locationLabel: row.location_label,
+    hintText: row.hint_text,
+    venueImageUrl: row.venue_image_url,
+    correctCode: row.correct_code,
+    coordinatorName: row.coordinator_name,
+    taskNote: row.task_note,
+  };
+}
+
+/** Map Venue object to Supabase fields */
+export function mapVenueToDb(venue: Venue) {
+  return {
+    id: venue.id,
+    order_id: venue.orderId,
+    name: venue.name,
+    location_label: venue.locationLabel,
+    hint_text: venue.hintText,
+    venue_image_url: venue.venueImageUrl,
+    correct_code: venue.correctCode,
+    coordinator_name: venue.coordinatorName,
+    task_note: venue.taskNote,
   };
 }
