@@ -24,12 +24,12 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
     e.preventDefault();
     const digits = normalizePhone(phone);
     if (digits.length !== 10) {
-      flash("Enter the 10-digit mobile number of your team leader.");
+      flash("Enter your 10-digit mobile number.");
       return;
     }
     const team = loginByLeaderPhone(digits);
     if (!team) {
-      flash("Number not found. Only the registered leader number can enter.");
+      flash("Mobile number not found in our list.");
       return;
     }
     setError("");
@@ -37,95 +37,100 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
   };
 
   return (
-    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-6 sm:px-6 sm:py-10">
-      <button type="button" className="btn-link" onClick={onBack}>
-        ← Back to nodes
+    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-6 sm:px-6 sm:py-10 text-text font-body">
+      <button type="button" className="btn-link !text-[0.65rem] font-bold uppercase tracking-widest text-cyan/50 hover:text-cyan" onClick={onBack}>
+        {"<< GO BACK"}
       </button>
 
-      <div className="mt-6 flex items-center gap-3">
-        <BrandMark size="sm" className="animate-float" />
+      <div className="mt-8 flex items-center gap-3 text-text">
+        <div className="relative">
+          <BrandMark size="sm" className="animate-float" />
+          <div className="absolute -inset-1 bg-cyan/20 blur-sm rounded-full" />
+        </div>
         <div>
-          <p className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.16em] text-cyan">
-            Advanced Computing Expedition
+          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan/70">
+            Adventure Start
           </p>
-          <h1 className="font-display text-xl font-bold text-white">
-            Access Verification
+          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
+            Team Login
           </h1>
         </div>
       </div>
 
-      <p className="mt-5 text-sm leading-relaxed text-mute">
-        Enter the registered mobile number of your team leader. If the number
-        matches the field registry, your crew unlocks the trail.
+      <p className="mt-6 text-sm leading-relaxed text-mute font-light">
+        Enter the mobile number you registered with to start your hunt.
       </p>
 
       <form
-        className="glass-strong glow-border mt-8 space-y-4 rounded-2xl p-5"
+        className="glass-strong glow-border mt-10 space-y-6 rounded-2xl p-6 border-t-2 border-t-cyan/30"
         onSubmit={handleSubmit}
         noValidate
       >
         <div>
           <label
             htmlFor="leader-phone"
-            className="font-mono text-[0.68rem] font-medium uppercase tracking-[0.14em] text-mute"
+            className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block"
           >
-            Leader mobile number
+            Registered Mobile Number
           </label>
-          <input
-            id="leader-phone"
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel"
-            className={`field-input mt-2 font-mono tracking-[0.18em] ${
-              error ? "error" : ""
-            } ${shaking ? "animate-shake" : ""}`}
-            placeholder="10-digit number"
-            value={phone}
-            onChange={(e) => {
-              const next = e.target.value.replace(/[^\d\s+\-]/g, "").slice(0, 16);
-              setPhone(next);
-              if (error) setError("");
-            }}
-            aria-invalid={!!error}
-            aria-describedby={error ? "phone-error" : "phone-help"}
-          />
-          <p id="phone-help" className="mt-1.5 text-xs text-mute/80">
-            Only the leader number on the registration sheet works. +91 is OK.
+          <div className="relative">
+             <input
+              id="leader-phone"
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel"
+              className={`field-input font-mono tracking-[0.3em] !text-center !text-xl !py-4 ${
+                error ? "error" : ""
+              } ${shaking ? "animate-shake" : ""}`}
+              placeholder="000000 0000"
+              value={phone}
+              onChange={(e) => {
+                const next = e.target.value.replace(/[^\d\s+\-]/g, "").slice(0, 16);
+                setPhone(next);
+                if (error) setError("");
+              }}
+              aria-invalid={!!error}
+              aria-describedby={error ? "phone-error" : "phone-help"}
+            />
+          </div>
+          <p id="phone-help" className="mt-3 text-[0.65rem] text-mute/60 font-mono uppercase tracking-tighter text-center">
+            * 10 digits only
           </p>
           {error && (
-            <p id="phone-error" className="mt-2 text-sm text-rose" role="alert">
+            <p id="phone-error" className="mt-4 text-xs text-rose font-mono uppercase tracking-tighter text-center" role="alert">
               {error}
             </p>
           )}
         </div>
 
-        <button type="submit" className="btn btn-primary w-full">
-          Enter the hunt
-          <span aria-hidden="true">→</span>
+        <button type="submit" className="btn btn-primary w-full !py-4 font-black tracking-widest uppercase">
+          START THE ADVENTURE
         </button>
       </form>
 
-      <div className="glass mt-6 rounded-2xl p-4">
-        <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.14em] text-magenta">
-          Demo leader numbers
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
+      <div className="glass mt-8 rounded-2xl p-5 border-white/5">
+         <div className="flex items-center gap-2 mb-4">
+          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-magenta/70">
+            TEST NUMBERS
+          </p>
+          <div className="h-px flex-1 bg-white/5" />
+        </div>
+        <div className="flex flex-wrap gap-2">
           {[
-            { phone: "9876543210", label: "Alpha" },
-            { phone: "9876543211", label: "Bravo" },
-            { phone: "9876543214", label: "Echo" },
+            { phone: "9876543210", label: "ALPHA" },
+            { phone: "9301900147", label: "DEV" },
           ].map((item) => (
             <button
               key={item.phone}
               type="button"
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 font-mono text-[0.72rem] font-medium tracking-wide text-slate-200 transition hover:border-cyan/40 hover:bg-cyan/10 hover:text-cyan"
+              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[0.65rem] font-bold tracking-wider text-slate-300 transition hover:border-cyan/40 hover:bg-cyan/10 hover:text-cyan"
               onClick={() => {
                 setPhone(item.phone);
                 setError("");
               }}
             >
               {item.phone}
-              <span className="ml-1.5 text-mute">· {item.label}</span>
+              <span className="ml-2 text-mute/50">:: {item.label}</span>
             </button>
           ))}
         </div>

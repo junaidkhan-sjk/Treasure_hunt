@@ -17,14 +17,14 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!code.trim()) {
-      setError("Enter the developer / judge access code.");
+      setError("Enter the Game Master access code.");
       setShaking(true);
       window.setTimeout(() => setShaking(false), 450);
       return;
     }
     if (!loginJudge(code)) {
       setCode("");
-      setError("Access denied. Invalid ops code.");
+      setError("Wrong access code.");
       setShaking(true);
       window.setTimeout(() => setShaking(false), 450);
       return;
@@ -34,50 +34,53 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
   };
 
   return (
-    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-6 sm:px-6 sm:py-10">
-      <button type="button" className="btn-link" onClick={onBack}>
-        ← Back to nodes
+    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-6 sm:px-6 sm:py-10 text-text font-body">
+      <button type="button" className="btn-link !text-[0.65rem] font-bold uppercase tracking-widest text-violet/50 hover:text-violet" onClick={onBack}>
+        {"<< GO BACK"}
       </button>
 
-      <div className="mt-6 flex items-center gap-3">
-        <BrandMark size="sm" />
+      <div className="mt-8 flex items-center gap-3">
+        <div className="relative">
+          <BrandMark size="sm" className="animate-float" />
+          <div className="absolute -inset-1 bg-violet/20 blur-sm rounded-full" />
+        </div>
         <div>
-          <p className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.16em] text-violet">
-            Restricted · Ops desk
+          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-violet/70">
+            Admin Portal
           </p>
-          <h1 className="font-display text-xl font-bold text-white">
-            Judge authorization
+          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
+            Game Master Login
           </h1>
         </div>
       </div>
 
-      <p className="mt-5 text-sm leading-relaxed text-mute">
-        Monitor access is locked behind a developer code. Only marshals and
-        event operators with the issued key may open the live board.
+      <p className="mt-6 text-sm leading-relaxed text-mute font-light">
+        Restricted access for event organizers only. Enter the master key
+        to view live progress and manage the hunt.
       </p>
 
       <form
-        className="glass-strong glow-border mt-8 space-y-4 rounded-2xl p-5"
+        className="glass-strong glow-border mt-10 space-y-6 rounded-2xl p-6 border-t-2 border-t-violet/30"
         onSubmit={handleSubmit}
         noValidate
       >
         <div>
           <label
             htmlFor="judge-code"
-            className="font-mono text-[0.68rem] font-medium uppercase tracking-[0.14em] text-mute"
+            className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block"
           >
-            Developer access code
+            MASTER KEY
           </label>
-          <div className="relative mt-2">
+          <div className="relative">
             <input
               id="judge-code"
               type={showCode ? "text" : "password"}
               autoComplete="off"
               spellCheck={false}
-              className={`field-input font-mono tracking-[0.12em] pr-20 ${
+              className={`field-input font-mono tracking-[0.4em] !text-center !text-xl !py-4 ${
                 error ? "error" : ""
               } ${shaking ? "animate-shake" : ""}`}
-              placeholder="••••••••••"
+              placeholder="**********"
               value={code}
               onChange={(e) => {
                 setCode(e.target.value);
@@ -88,19 +91,16 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
             />
             <button
               type="button"
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 font-mono text-[0.65rem] uppercase tracking-wider text-mute transition hover:text-cyan"
+              className="absolute right-4 top-1/2 -translate-y-1/2 rounded-md px-2 py-1 font-mono text-[0.6rem] uppercase tracking-wider text-mute transition hover:text-violet bg-white/5"
               onClick={() => setShowCode((v) => !v)}
             >
-              {showCode ? "Hide" : "Show"}
+              {showCode ? "HIDE" : "SHOW"}
             </button>
           </div>
-          <p id="judge-code-help" className="mt-1.5 text-xs text-mute/80">
-            Issued only to judges and developers. Not shared with teams.
-          </p>
           {error && (
             <p
               id="judge-code-error"
-              className="mt-2 text-sm text-rose"
+              className="mt-4 text-xs text-rose font-mono uppercase tracking-tighter text-center"
               role="alert"
             >
               {error}
@@ -108,19 +108,14 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
           )}
         </div>
 
-        <button type="submit" className="btn btn-primary w-full">
-          Unlock monitor
-          <span aria-hidden="true">→</span>
+        <button type="submit" className="btn btn-primary !bg-gradient-to-r !from-violet-600 !to-indigo-600 w-full !py-4 font-black tracking-widest uppercase shadow-[0_0_20px_rgba(124,58,237,0.3)]">
+          OPEN DASHBOARD
         </button>
       </form>
 
-      <div className="glass mt-6 rounded-2xl border border-rose/20 p-4">
-        <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.14em] text-rose">
-          Security notice
-        </p>
-        <p className="mt-2 text-sm leading-relaxed text-mute">
-          Failed attempts do not reveal whether a code format is close. Keep the
-          ops key offline. Teams cannot open this desk with a leader number.
+      <div className="glass mt-8 rounded-2xl border border-rose/10 p-5 bg-rose/5">
+        <p className="text-[0.7rem] leading-relaxed text-rose/60 font-mono uppercase tracking-widest text-center">
+          * Unauthorized access is strictly prohibited.
         </p>
       </div>
     </div>

@@ -23,12 +23,18 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
   const [shaking, setShaking] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [now, setNow] = useState(Date.now());
+  const [logs, setLogs] = useState<string[]>(["Welcome to the hunt!", "Your first riddle is ready.", "Find the spot and enter the code."]);
   const codeRef = useRef<HTMLInputElement>(null);
   const advanceTimer = useRef<number | null>(null);
+
+  const addLog = (msg: string) => {
+    setLogs(prev => [...prev.slice(-4), `[${new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' })}] ${msg}`]);
+  };
 
   useEffect(() => {
     if (team && team.finishedAt == null && team.startedAt == null) {
       ensureStarted(teamId);
+      addLog("Quest timer started!");
     }
   }, [team, teamId, ensureStarted]);
 
@@ -37,10 +43,11 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     return () => window.clearInterval(id);
   }, []);
 
-  // Fetch clue securely on level change
+  // Fetch clue securely on level change (This is the "Sequencing" engine)
   useEffect(() => {
     if (team) {
       refreshCurrentClue(team.currentLevelIndex);
+      addLog(`Syncing with Stop #${team.currentLevelIndex + 1}...`);
     }
   }, [team?.currentLevelIndex, refreshCurrentClue]);
 
@@ -65,9 +72,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
   if (!team) {
     return (
       <div className="animate-fade-in mx-auto max-w-lg px-4 py-10">
-        <p className="text-rose">Session dropped.</p>
-        <button type="button" className="btn btn-primary mt-4" onClick={onLogout}>
-          Re-authenticate
+        <p className="text-rose text-center">Session lost. Please log in again.</p>
+        <button type="button" className="btn btn-primary mt-4 w-full" onClick={onLogout}>
+          Go back to Login
         </button>
       </div>
     );
@@ -90,26 +97,29 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     window.setTimeout(() => setShaking(false), 450);
   };
 
-  const handleCodeCheck = (e: FormEvent) => {
+  const handleCodeCheck = async (e: FormEvent) => {
     e.preventDefault();
     if (advancing) return;
 
     const trimmed = code.trim();
     if (!trimmed) {
-      flashError("Enter the code from the backside of the clue paper.");
+      flashError("Please enter the secret code.");
       return;
     }
 
-    const result = checkClueCode(teamId, trimmed);
+    addLog(`Validating Stop #${clueNumber}...`);
+    const result = await checkClueCode(teamId, trimmed);
     if (!result.ok) {
       setCode("");
       flashError(result.message);
+      addLog("Invalid Code. Are you at the right stop?");
       codeRef.current?.focus();
       return;
     }
 
     setError("");
     setPhase("confirm");
+    addLog("Verified! Please match the visual feed.");
   };
 
   const handleWrongPlace = () => {
@@ -117,32 +127,36 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     setPhase("hint");
     setCode("");
     setError("");
+    addLog("Warning: Returning to clue.");
   };
 
   const handleCorrectPlace = () => {
     if (advancing) return;
     setAdvancing(true);
+    addLog("Updating mission progress...");
 
     const result = confirmAndAdvance(teamId);
     if (!result.ok) {
       setAdvancing(false);
       flashError(result.message);
       setPhase("hint");
+      addLog("Error updating sequence.");
       return;
     }
 
     advanceTimer.current = window.setTimeout(() => {
       setAdvancing(false);
+      addLog("Stop cleared! Next clue available.");
     }, 400);
   };
 
   if (finished) {
     return (
-      <div className="animate-fade-in mx-auto flex w-full max-w-lg flex-col items-center px-4 py-10 text-center sm:px-6">
-        <div className="flex w-full items-center justify-between">
+      <div className="animate-fade-in mx-auto flex w-full max-w-lg flex-col items-center px-4 py-10 text-center sm:px-6 font-body">
+        <div className="flex w-full items-center justify-between border-b border-white/5 pb-5">
           <BrandMark size="sm" />
-          <button type="button" className="btn-link" onClick={onLogout}>
-            Disconnect
+          <button type="button" className="btn-link !text-[0.6rem] uppercase tracking-widest text-rose" onClick={onLogout}>
+            [ DISCONNECT ]
           </button>
         </div>
 
@@ -153,7 +167,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
           <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan/40 via-violet/30 to-magenta/40 blur-xl" />
           <div className="relative flex h-full w-full flex-col items-center justify-center rounded-full border border-cyan/40 bg-panel/80 shadow-[0_0_40px_rgba(34,211,238,0.35)]">
             <span className="font-mono text-[0.62rem] font-bold uppercase tracking-[0.2em] text-cyan">
-              Mission
+              QUEST
             </span>
             <span className="font-display mt-1 text-lg font-bold text-white">
               CLEAR
@@ -161,19 +175,15 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
           </div>
         </div>
 
-        <h1 className="font-display mt-8 text-[1.9rem] font-bold leading-tight text-white sm:text-[2.2rem]">
-          Well hunted, <span className="text-gradient">{team.teamName}</span>
+        <h1 className="font-display mt-8 text-[2rem] font-bold leading-tight text-white sm:text-[2.5rem]">
+          AMAZING JOB, <span className="text-gradient">{team.teamName.toUpperCase()}</span>!
         </h1>
-        <p className="mt-3 text-mute">All clues cleared. Treasure protocol live.</p>
-        <p className="mt-4 max-w-sm text-sm leading-relaxed text-mute">
-          Present this screen at the final marshal desk. Your crew finished the
-          full circuit—without a place list in hand.
-        </p>
+        <p className="mt-3 text-mute font-mono text-sm uppercase tracking-widest">Adventure Sequence Completed</p>
 
         <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3">
           <div className="glass rounded-2xl px-3 py-4">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-mute">
-              Field time
+              Adventure Time
             </p>
             <p className="font-mono mt-2 text-2xl font-semibold tabular-nums text-cyan">
               {formatElapsed(elapsedMs)}
@@ -181,7 +191,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
           </div>
           <div className="glass rounded-2xl px-3 py-4">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-mute">
-              Clues
+              Stops Found
             </p>
             <p className="font-mono mt-2 text-2xl font-semibold tabular-nums text-violet">
               {totalVenuesCount}/{totalVenuesCount}
@@ -194,249 +204,270 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
   if (!venue) {
     return (
-      <div className="flex min-h-dvh items-center justify-center">
+      <div className="flex min-h-dvh items-center justify-center bg-void">
         <div className="text-center">
-          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-cyan border-t-transparent mx-auto" />
-          <p className="font-mono text-xs text-cyan animate-pulse">Decrypting Clue...</p>
+          <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-cyan border-t-transparent mx-auto shadow-[0_0_15px_rgba(34,211,238,0.2)]" />
+          <p className="font-mono text-[0.6rem] text-cyan animate-pulse uppercase tracking-[0.3em]">Decoding Next Riddle...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7">
-      <header className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-2.5">
-          <BrandMark size="sm" className="animate-float" />
+    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7 font-body">
+      <header className="flex items-start justify-between gap-3 border-b border-white/5 pb-5">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="relative">
+            <BrandMark size="sm" className="animate-float" />
+            <div className="absolute -inset-1 bg-cyan/10 blur-sm rounded-full" />
+          </div>
           <div className="min-w-0">
-            <p className="truncate font-display text-lg font-bold leading-tight text-white">
-              {team.teamName}
+            <p className="truncate font-display text-lg font-bold leading-tight text-white tracking-tight">
+              {team.teamName.toUpperCase()}
             </p>
-            <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-cyan">
-              Agent ID: {team.teamId}
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="h-1 w-1 rounded-full bg-cyan animate-pulse" />
+              <p className="font-mono text-[0.55rem] uppercase tracking-widest text-cyan/70">
+                PATHFINDER :: {team.teamId}
+              </p>
+            </div>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className="rounded-lg border border-cyan/20 bg-cyan/10 px-2.5 py-1 font-mono text-[0.75rem] tabular-nums text-cyan shadow-[0_0_16px_rgba(34,211,238,0.15)]">
+        <div className="flex flex-col items-end gap-2">
+          <div className="rounded-lg border border-cyan/20 bg-cyan/5 px-3 py-1 font-mono text-[0.75rem] tabular-nums text-cyan shadow-[0_0_15px_rgba(34,211,238,0.1)]">
             {formatElapsed(elapsedMs)}
           </div>
-          <button type="button" className="btn-link" onClick={onLogout}>
-            Disconnect
+          <button type="button" className="btn-link !text-[0.6rem] hover:!text-rose transition-colors uppercase tracking-widest" onClick={onLogout}>
+            [ LEAVE ]
           </button>
         </div>
       </header>
 
-      {/* Progress only — no place names or route list */}
-      <section className="glass mt-5 relative overflow-hidden rounded-2xl p-4 border-l-2 border-l-cyan">
-        <div className="scanning-line opacity-10" />
-        <div className="flex items-center justify-between gap-2">
-          <p className="font-mono text-[0.62rem] font-medium uppercase tracking-[0.14em] text-cyan animate-pulse-glow">
-            Mission Timeline
-          </p>
-
-          <span className="chip animate-pulse-glow">
-            LEVEL {padStop(clueNumber)}
-          </span>
+      {/* Quest Logs */}
+      <div className="mt-6 glass-strong rounded-xl p-3 border border-white/5 font-mono text-[0.6rem] bg-black/40">
+        <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2">
+          <span className="text-cyan font-bold">»</span>
+          <span className="text-mute uppercase tracking-widest font-black">QUEST_LOG</span>
         </div>
-        <div className="progress-track mt-3">
-          <div className="progress-fill" style={{ width: `${progressPct}%` }} />
-        </div>
-        <p className="mt-2 font-mono text-[0.65rem] text-mute">
-          {cleared} cleared · place names hidden
-        </p>
-        <ul className="mt-3 flex flex-wrap gap-1.5">
-          {team.members.map((m) => (
-            <li
-              key={m}
-              className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300"
-            >
-              {m}
-            </li>
+        <div className="space-y-1">
+          {logs.map((log, i) => (
+            <div key={i} className={`${log.includes('Invalid') || log.includes('Error') ? 'text-rose' : log.includes('Verified') || log.includes('Success') ? 'text-lime' : 'text-cyan/60'}`}>
+              {log}
+            </div>
           ))}
-        </ul>
-      </section>
-
-      <div className="mt-5 flex items-center gap-1.5" aria-hidden="true">
-        {(["hint", "confirm"] as ParticipantPhase[]).map((p) => (
-          <span
-            key={p}
-            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
-              phase === p
-                ? "bg-cyan shadow-[0_0_10px_rgba(34,211,238,0.7)]"
-                : phase === "confirm" && p === "hint"
-                  ? "bg-violet/60"
-                  : "bg-white/10"
-            }`}
-          />
-        ))}
+          <div className="flex items-center gap-1 mt-1">
+            <span className="text-cyan animate-pulse">{">"}</span>
+            <span className="h-3 w-1.5 bg-cyan/40 animate-blink" />
+          </div>
+        </div>
       </div>
 
-      {/* PHASE 1 — Hint + code from backside of clue paper */}
-      {phase === "hint" && (
-        <section className="animate-fade-scale mt-4">
-          <p className="font-mono text-[0.65rem] font-medium uppercase tracking-[0.16em] text-cyan">
-            Active clue
+      {/* Visual Sequence Map */}
+      <section className="glass mt-6 relative overflow-hidden rounded-2xl p-5 border-l-4 border-l-cyan bg-black/20">
+        <div className="scanning-line opacity-5" />
+        <div className="flex items-center justify-between gap-2 mb-5">
+          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-cyan/80">
+            SEQUENCE_TRACKER
           </p>
-          <h1 className="font-display mt-2 text-[1.55rem] font-bold leading-snug text-white sm:text-[1.75rem]">
-            Follow the riddle
-          </h1>
-          <p className="mt-2 text-sm text-mute">
-            Place names stay hidden. Solve this clue on campus, then enter the
-            code printed on the backside of the clue paper.
-          </p>
+          <div className="px-2 py-0.5 rounded bg-cyan/10 border border-cyan/20">
+             <span className="font-mono text-[0.7rem] font-bold text-cyan">STOP {clueNumber} / {totalVenuesCount}</span>
+          </div>
+        </div>
 
-          <div className="glass-strong glow-border mt-4 rounded-2xl p-5">
-            <div className="mb-3 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-lime shadow-[0_0_8px_#34d399]" />
-              <span className="font-mono text-[0.62rem] uppercase tracking-[0.12em] text-mute">
-                Encrypted · clue {padStop(clueNumber)}
+        <div className="flex items-center justify-between gap-1 relative px-1">
+           {/* Connecting Line Background */}
+           <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 -translate-y-1/2" />
+
+           {[...Array(totalVenuesCount)].map((_, i) => (
+            <div key={i} className="relative z-10 flex flex-col items-center gap-2">
+               <div
+                  className={`h-3 w-3 rounded-full border transition-all duration-700 ${
+                    i < cleared ? 'bg-cyan border-cyan shadow-[0_0_10px_rgba(34,211,238,0.5)]' :
+                    i === cleared ? 'bg-black border-cyan animate-pulse' : 'bg-black border-white/10'
+                  }`}
+                />
+                <span className={`font-mono text-[0.5rem] ${i === cleared ? 'text-cyan font-black' : 'text-mute/30'}`}>
+                  {padStop(i+1)}
+                </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex justify-between items-center mt-5 pt-4 border-t border-white/5">
+          <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest">
+            {cleared} Completed // {totalVenuesCount - cleared} Locked
+          </p>
+          <span className="font-mono text-[0.6rem] text-cyan font-black italic">
+            {Math.round(progressPct)}% SYNC
+          </span>
+        </div>
+      </section>
+
+      {/* Current Riddle */}
+      {phase === "hint" && (
+        <section className="animate-fade-scale mt-6 font-body">
+          <div className="flex items-center gap-2 mb-2">
+             <div className="h-1 w-8 bg-cyan/40 rounded-full" />
+             <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan">ACTIVE_RIDDLE</p>
+          </div>
+          <h1 className="font-display text-2xl font-black leading-tight text-white tracking-tight uppercase">
+            Solve This Mystery
+          </h1>
+
+          <div className="glass-strong glow-border mt-6 rounded-2xl p-6 relative overflow-hidden border-t-2 border-t-cyan/30">
+            <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+               <BrandMark size="lg" />
+            </div>
+            <div className="mb-6 flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-lime shadow-[0_0_8px_rgba(52,211,153,0.4)] animate-pulse" />
+              <span className="font-mono text-[0.55rem] font-black uppercase tracking-[0.2em] text-mute">
+                LOCATION_ENCRYPTION_NODE_{padStop(clueNumber)}
               </span>
             </div>
-            <blockquote className="font-display text-[1.15rem] font-semibold leading-snug text-slate-100 sm:text-[1.3rem]">
-              {venue.hintText}
+            <blockquote className="font-display text-[1.25rem] font-bold leading-relaxed text-slate-100 sm:text-[1.5rem] italic">
+              "{venue.hintText}"
             </blockquote>
-            <p className="mt-4 border-t border-white/10 pt-4 text-sm leading-relaxed text-mute">
-              {venue.taskNote}
-            </p>
-            <p className="mt-3 rounded-xl border border-cyan/20 bg-cyan/5 px-3 py-2.5 text-sm text-slate-300">
-              Flip the physical clue paper. Enter the code written on the back
-              to open the photo check.
-            </p>
+            <div className="mt-8 pt-6 border-t border-white/5 space-y-4">
+               <div className="flex items-start gap-3">
+                  <span className="font-mono text-cyan text-[0.65rem] font-bold">[!]</span>
+                  <p className="text-[0.7rem] leading-relaxed text-mute uppercase font-mono tracking-tighter">
+                    ADVICE: {venue.taskNote}
+                  </p>
+               </div>
+              <div className="rounded-xl border border-cyan/10 bg-white/[0.02] p-4 flex items-start gap-3">
+                <span className="text-cyan text-sm">✦</span>
+                <p className="text-[0.7rem] text-slate-400 leading-relaxed font-light">
+                  Find the hidden spot on campus. Once found, locate the code
+                  printed on the back of your physical card and enter it below.
+                </p>
+              </div>
+            </div>
           </div>
 
           <form
-            className={`glass mt-5 space-y-3 rounded-2xl p-4 sm:p-5 ${
+            className={`glass mt-6 space-y-5 rounded-2xl p-6 border-b-2 border-b-cyan/20 ${
               shaking ? "animate-shake" : ""
             }`}
             onSubmit={handleCodeCheck}
           >
-            <div>
+            <div className="text-center">
               <label
                 htmlFor="clue-code"
-                className="font-mono text-[0.68rem] font-medium uppercase tracking-[0.12em] text-mute"
+                className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-mute mb-4 block"
               >
-                Code on clue paper
+                INPUT_SECRET_ACCESS_KEY
               </label>
-              <input
-                ref={codeRef}
-                id="clue-code"
-                type="text"
-                autoCapitalize="characters"
-                autoComplete="off"
-                className={`field-input mt-2 font-mono tracking-[0.16em] uppercase ${
-                  error ? "error" : ""
-                }`}
-                placeholder="Backside code"
-                value={code}
-                onChange={(e) => {
-                  setCode(e.target.value.toUpperCase());
-                  if (error) setError("");
-                }}
-                aria-invalid={!!error}
-                aria-describedby={error ? "code-error" : "code-help"}
-              />
-              <p id="code-help" className="mt-1.5 text-xs text-mute">
-                Exact code from the reverse side of this stop&apos;s clue paper.
-              </p>
+              <div className="relative">
+                <input
+                  ref={codeRef}
+                  id="clue-code"
+                  type="text"
+                  autoCapitalize="characters"
+                  autoComplete="off"
+                  className={`field-input font-mono tracking-[0.4em] uppercase !text-center !text-2xl !py-5 !bg-black/60 !border-white/10 focus:!border-cyan/50 ${
+                    error ? "error" : ""
+                  }`}
+                  placeholder="------"
+                  value={code}
+                  onChange={(e) => {
+                    setCode(e.target.value.toUpperCase());
+                    if (error) setError("");
+                  }}
+                />
+              </div>
               {error && (
-                <p id="code-error" className="mt-1.5 text-sm text-rose" role="alert">
-                  {error}
+                <p className="mt-4 text-[0.65rem] text-rose font-mono uppercase tracking-widest font-bold" role="alert">
+                  {"[ DENIED ] " + error}
                 </p>
               )}
             </div>
 
-            <button type="submit" className="btn btn-primary w-full">
-              Check this stop
+            <button type="submit" className="btn btn-primary w-full !py-5 font-black tracking-[0.2em] uppercase shadow-[0_0_25px_rgba(34,211,238,0.2)]">
+              VERIFY LOCATION
             </button>
           </form>
         </section>
       )}
 
-      {/* PHASE 2 — Image confirm (still no place name) */}
+      {/* Confirmation Step */}
       {phase === "confirm" && (
-        <section className="animate-fade-scale mt-4">
+        <section className="animate-fade-scale mt-6 text-text">
           <button
             type="button"
-            className="btn-link"
+            className="btn-link !text-[0.65rem] font-black uppercase tracking-widest text-cyan/30 hover:text-cyan"
             onClick={handleWrongPlace}
             disabled={advancing}
           >
-            ← Back to clue
+            {"<< ABORT_SCAN / RETURN"}
           </button>
 
-          <p className="font-mono mt-4 text-[0.65rem] font-medium uppercase tracking-[0.16em] text-violet">
-            Visual check
+          <p className="font-mono mt-8 text-[0.65rem] font-black uppercase tracking-[0.3em] text-violet">
+            SITE_VISUAL_AUTH
           </p>
-          <h2 className="font-display mt-2 text-[1.55rem] font-bold leading-snug text-white">
-            Does this match where you are?
+          <h2 className="font-display mt-2 text-[1.8rem] font-black leading-tight text-white tracking-tight uppercase">
+            MATCH DETECTED?
           </h2>
-          <p className="mt-2 text-sm text-mute">
-            Clue-paper code accepted. Compare this photo to your surroundings.
-            Place names stay hidden either way.
+          <p className="mt-2 text-sm text-mute font-light italic">
+            Check the site imagery against your physical surroundings.
           </p>
 
-          <div className="glass-strong glow-border mt-4 overflow-hidden rounded-2xl">
+          <div className="glass-strong glow-border mt-8 overflow-hidden rounded-2xl border-t-2 border-t-violet/40 bg-black/40">
             <div className="relative aspect-[16/10] bg-void">
               <img
                 src={venue.venueImageUrl}
-                alt={`Reference view for clue ${clueNumber}`}
-                className="h-full w-full object-cover opacity-90"
+                alt={`Stop ${clueNumber}`}
+                className="h-full w-full object-cover opacity-80"
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-void via-transparent to-cyan/10" />
-              <div className="absolute left-3 top-3">
-                <span className="chip chip-live">Photo check</span>
+              <div className="absolute left-5 top-5">
+                <div className="chip !bg-violet/30 !border-violet/50 !text-white font-black tracking-widest text-[0.55rem]">UPLINK_IMAGE</div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-10">
-                <p className="font-mono text-[0.65rem] uppercase tracking-[0.14em] text-cyan">
-                  Clue {padStop(clueNumber)} · name sealed
+              <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 to-transparent">
+                <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-cyan font-black shadow-black">
+                  STOP :: {padStop(clueNumber)} // SECTOR :: CONFIRMED
                 </p>
               </div>
             </div>
-            <div className="p-4">
-              <p className="text-sm leading-relaxed text-mute">
-                If the photo does not match reality, you are at the wrong place.
-                Go back to the clue and keep hunting.
-              </p>
-              <p className="mt-2 text-sm text-slate-400">
-                If it matches, confirm below. You will receive the next riddle
-                only—not the next place name.
+            <div className="p-6">
+              <p className="text-[0.7rem] leading-relaxed text-mute font-mono uppercase tracking-tighter">
+                CRITERIA: If visual landmarks align with the digital feed, authorize the final handoff.
+                Misalignment requires immediate abort.
               </p>
             </div>
           </div>
 
           {advancing && (
             <div
-              className="animate-stamp mt-4 rounded-xl border border-lime/30 bg-lime/10 px-3.5 py-3"
+              className="animate-stamp mt-8 rounded-xl border border-lime/40 bg-lime/10 p-5 text-center shadow-[0_0_20px_rgba(52,211,153,0.1)]"
               role="status"
             >
-              <p className="font-mono text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-lime">
-                {isLast ? "Final stop cleared" : "Stop cleared"}
+              <p className="font-mono text-[0.75rem] font-black uppercase tracking-[0.3em] text-lime">
+                {isLast ? "ADVENTURE_COMPLETE" : "STOP_SECURED"}
               </p>
-              <p className="mt-1 text-sm text-lime/90">
+              <p className="mt-2 text-[0.6rem] text-lime/70 font-mono tracking-widest uppercase animate-pulse">
                 {isLast
-                  ? "Unlocking treasure screen…"
-                  : "Loading next clue… place name hidden."}
+                  ? "Unlocking Final Treasure..."
+                  : "Calibrating Next Destination..."}
               </p>
             </div>
           )}
 
-          <div className="mt-5 grid gap-2 sm:grid-cols-2">
+          <div className="mt-8 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
-              className="btn btn-secondary w-full"
+              className="btn btn-secondary w-full !py-5 font-black tracking-[0.2em] text-[0.65rem] uppercase"
               onClick={handleWrongPlace}
               disabled={advancing}
             >
-              No — wrong place
+              ABORT_SCAN
             </button>
             <button
               type="button"
-              className="btn btn-primary w-full"
+              className="btn btn-primary w-full !py-5 font-black tracking-[0.2em] text-[0.65rem] uppercase"
               onClick={handleCorrectPlace}
               disabled={advancing}
             >
-              {advancing ? "Advancing…" : "Yes — next clue"}
+              {advancing ? "UPLINKING..." : "CONFIRM_SITE"}
             </button>
           </div>
         </section>
