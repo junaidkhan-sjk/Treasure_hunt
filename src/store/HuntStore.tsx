@@ -158,20 +158,22 @@ export function HuntProvider({ children }: { children: ReactNode }) {
   }, [teams]);
 
   const checkClueCode = useCallback(
-    (teamId: string, code: string): CodeCheckResult => {
-      const team = teams.find((t) => t.teamId === teamId);
-      if (!team) return { ok: false, message: "Team not found." };
+    async (teamId: string, code: string): Promise<CodeCheckResult> => {
+      try {
+        const { data, error } = await supabase.functions.invoke('verify-clue', {
+          body: { team_id: teamId, submitted_code: code }
+        });
 
-      // Use the securely loaded currentClue instead of searching the full list
-      if (!currentClue) return { ok: false, message: "No active clue loaded." };
+        if (error || !data.ok) {
+          return { ok: false, message: data?.message || "Verification failed." };
+        }
 
-      if (!codesMatch(code, currentClue.correctCode)) {
-        return { ok: false, message: "Invalid code. Check the paper." };
+        return { ok: true };
+      } catch (err) {
+        return { ok: false, message: "Network error during verification." };
       }
-
-      return { ok: true };
     },
-    [teams, currentClue]
+    []
   );
 
   const confirmAndAdvance = useCallback(
@@ -181,18 +183,6 @@ export function HuntProvider({ children }: { children: ReactNode }) {
 
       const nextLevel = team.currentLevelIndex + 1;
       const finished = nextLevel >= totalVenuesCount;
-      const now = Date.now();
-
-      supabase
-        .from('teams')
-        .update({
-          current_level_index: nextLevel,
-          last_completion_at: now,
-          started_at: team.startedAt ?? now,
-          finished_at: finished ? now : null,
-        })
-        .eq('team_id', teamId)
-        .then();
 
       return { ok: true, finished, nextLevel };
     },
