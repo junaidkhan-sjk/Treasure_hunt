@@ -427,43 +427,6 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             </button>
           </form>
         </section>
-
-      {/* Team Crew Info */}
-      <div className="mt-6 glass rounded-2xl p-5 border-t border-white/5 bg-black/10">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-magenta/70">
-            UNIT_ROSTER
-          </p>
-          <div className="h-px flex-1 bg-white/5" />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full bg-cyan/10 border border-cyan/30 flex items-center justify-center font-mono text-[0.6rem] text-cyan font-bold">LDR</div>
-             <div>
-                <p className="font-mono text-[0.5rem] text-mute uppercase tracking-widest">Team Leader</p>
-                <p className="font-display text-sm font-black text-white uppercase tracking-wide">{team.leaderName}</p>
-             </div>
-          </div>
-
-          <div className="pt-4 border-t border-white/5">
-             <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest mb-3">Crew Members</p>
-             <div className="flex flex-wrap gap-2">
-                {team.members.map((m) => (
-                  <span
-                    key={m}
-                    className="rounded border border-white/5 bg-white/5 px-2.5 py-1 font-mono text-[0.6rem] text-mute uppercase tracking-tighter hover:text-cyan transition-colors"
-                  >
-                    # {m}
-                  </span>
-                ))}
-                {team.members.length === 0 && (
-                  <span className="text-[0.6rem] font-mono text-mute/30 italic">No other members registered.</span>
-                )}
-             </div>
-          </div>
-        </div>
-      </div>
       )}
 
       {/* Confirmation Section */}
@@ -547,43 +510,6 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             </button>
           </div>
         </section>
-
-      {/* Team Crew Info */}
-      <div className="mt-6 glass rounded-2xl p-5 border-t border-white/5 bg-black/10">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-magenta/70">
-            UNIT_ROSTER
-          </p>
-          <div className="h-px flex-1 bg-white/5" />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full bg-cyan/10 border border-cyan/30 flex items-center justify-center font-mono text-[0.6rem] text-cyan font-bold">LDR</div>
-             <div>
-                <p className="font-mono text-[0.5rem] text-mute uppercase tracking-widest">Team Leader</p>
-                <p className="font-display text-sm font-black text-white uppercase tracking-wide">{team.leaderName}</p>
-             </div>
-          </div>
-
-          <div className="pt-4 border-t border-white/5">
-             <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest mb-3">Crew Members</p>
-             <div className="flex flex-wrap gap-2">
-                {team.members.map((m) => (
-                  <span
-                    key={m}
-                    className="rounded border border-white/5 bg-white/5 px-2.5 py-1 font-mono text-[0.6rem] text-mute uppercase tracking-tighter hover:text-cyan transition-colors"
-                  >
-                    # {m}
-                  </span>
-                ))}
-                {team.members.length === 0 && (
-                  <span className="text-[0.6rem] font-mono text-mute/30 italic">No other members registered.</span>
-                )}
-             </div>
-          </div>
-        </div>
-      </div>
       )}
     </div>
   );
