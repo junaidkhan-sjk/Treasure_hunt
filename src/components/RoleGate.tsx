@@ -107,31 +107,7 @@ export function RoleGate({ onParticipant, onJudge }: RoleGateProps) {
         </button>
       </div>
 
-      <div className="glass animate-rise stagger-4 mt-10 rounded-2xl p-5 border-t-2 border-t-cyan/20">
-        <div className="flex items-center justify-between gap-2 border-b border-white/5 pb-3 mb-4">
-          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute">
-            QUICK LOGIN NUMBERS
-          </p>
-          <div className="flex gap-1">
-            <div className="h-1 w-1 rounded-full bg-cyan/50" />
-            <div className="h-1 w-1 rounded-full bg-cyan/50" />
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <ul className="space-y-2 font-mono text-[0.7rem] text-slate-400">
-            <li className="flex flex-col">
-              <span className="text-cyan font-bold tracking-tighter">9876543210</span>
-              <span className="text-[0.6rem] text-mute uppercase">Alpha Team</span>
-            </li>
-          </ul>
-          <ul className="space-y-2 font-mono text-[0.7rem] text-slate-400 border-l border-white/5 pl-4">
-            <li className="flex flex-col">
-              <span className="text-cyan font-bold tracking-tighter">9301900147</span>
-              <span className="text-[0.6rem] text-mute uppercase">Master Key</span>
-            </li>
-          </ul>
-        </div>
-      </div>
+
     </div>
   );
 }

@@ -108,33 +108,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
         </button>
       </form>
 
-      <div className="glass mt-8 rounded-2xl p-5 border-white/5">
-         <div className="flex items-center gap-2 mb-4">
-          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-magenta/70">
-            TEST NUMBERS
-          </p>
-          <div className="h-px flex-1 bg-white/5" />
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { phone: "9876543210", label: "ALPHA" },
-            { phone: "9301900147", label: "DEV" },
-          ].map((item) => (
-            <button
-              key={item.phone}
-              type="button"
-              className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 font-mono text-[0.65rem] font-bold tracking-wider text-slate-300 transition hover:border-cyan/40 hover:bg-cyan/10 hover:text-cyan"
-              onClick={() => {
-                setPhone(item.phone);
-                setError("");
-              }}
-            >
-              {item.phone}
-              <span className="ml-2 text-mute/50">:: {item.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+
     </div>
   );
 }
