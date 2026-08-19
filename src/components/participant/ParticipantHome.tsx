@@ -23,7 +23,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
   const [shaking, setShaking] = useState(false);
   const [advancing, setAdvancing] = useState(false);
   const [now, setNow] = useState(Date.now());
-  const [logs, setLogs] = useState<string[]>(["Welcome to the hunt!", "Your first riddle is ready.", "Find the spot and enter the code."]);
+  const [logs, setLogs] = useState<string[]>(["Welcome!", "Your first riddle is ready.", "Find the spot and enter the code."]);
   const codeRef = useRef<HTMLInputElement>(null);
   const advanceTimer = useRef<number | null>(null);
 
@@ -34,7 +34,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
   useEffect(() => {
     if (team && team.finishedAt == null && team.startedAt == null) {
       ensureStarted(teamId);
-      addLog("Quest timer started!");
+      addLog("Game timer started!");
     }
   }, [team, teamId, ensureStarted]);
 
@@ -43,11 +43,11 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     return () => window.clearInterval(id);
   }, []);
 
-  // Fetch clue securely on level change (This is the "Sequencing" engine)
+  // Fetch clue securely on level change
   useEffect(() => {
     if (team) {
       refreshCurrentClue(team.currentLevelIndex);
-      addLog(`Syncing with Stop #${team.currentLevelIndex + 1}...`);
+      addLog(`Finding Stop #${team.currentLevelIndex + 1}...`);
     }
   }, [team?.currentLevelIndex, refreshCurrentClue]);
 
@@ -72,9 +72,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
   if (!team) {
     return (
       <div className="animate-fade-in mx-auto max-w-lg px-4 py-10">
-        <p className="text-rose text-center">Session lost. Please log in again.</p>
+        <p className="text-rose text-center">Connection lost. Please log in again.</p>
         <button type="button" className="btn btn-primary mt-4 w-full" onClick={onLogout}>
-          Go back to Login
+          Go to Login
         </button>
       </div>
     );
@@ -107,19 +107,19 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
       return;
     }
 
-    addLog(`Validating Stop #${clueNumber}...`);
+    addLog(`Checking code: ${trimmed}...`);
     const result = await checkClueCode(teamId, trimmed);
     if (!result.ok) {
       setCode("");
       flashError(result.message);
-      addLog("Invalid Code. Are you at the right stop?");
+      addLog("Wrong code! Try again.");
       codeRef.current?.focus();
       return;
     }
 
     setError("");
     setPhase("confirm");
-    addLog("Verified! Please match the visual feed.");
+    addLog("Correct! Does the photo match?");
   };
 
   const handleWrongPlace = () => {
@@ -127,36 +127,36 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
     setPhase("hint");
     setCode("");
     setError("");
-    addLog("Warning: Returning to clue.");
+    addLog("Going back to the riddle.");
   };
 
   const handleCorrectPlace = () => {
     if (advancing) return;
     setAdvancing(true);
-    addLog("Updating mission progress...");
+    addLog("Moving to next stop...");
 
     const result = confirmAndAdvance(teamId);
     if (!result.ok) {
       setAdvancing(false);
       flashError(result.message);
       setPhase("hint");
-      addLog("Error updating sequence.");
+      addLog("Something went wrong.");
       return;
     }
 
     advanceTimer.current = window.setTimeout(() => {
       setAdvancing(false);
-      addLog("Stop cleared! Next clue available.");
+      addLog("Stop cleared! Next clue ready.");
     }, 400);
   };
 
   if (finished) {
     return (
       <div className="animate-fade-in mx-auto flex w-full max-w-lg flex-col items-center px-4 py-10 text-center sm:px-6 font-body">
-        <div className="flex w-full items-center justify-between border-b border-white/5 pb-5">
+        <div className="flex w-full items-center justify-between border-b border-white/5 pb-5 text-text">
           <BrandMark size="sm" />
           <button type="button" className="btn-link !text-[0.6rem] uppercase tracking-widest text-rose" onClick={onLogout}>
-            [ DISCONNECT ]
+            [ LOG OUT ]
           </button>
         </div>
 
@@ -170,20 +170,20 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               QUEST
             </span>
             <span className="font-display mt-1 text-lg font-bold text-white">
-              CLEAR
+              DONE!
             </span>
           </div>
         </div>
 
         <h1 className="font-display mt-8 text-[2rem] font-bold leading-tight text-white sm:text-[2.5rem]">
-          AMAZING JOB, <span className="text-gradient">{team.teamName.toUpperCase()}</span>!
+          GREAT JOB, <span className="text-gradient">{team.teamName.toUpperCase()}</span>!
         </h1>
-        <p className="mt-3 text-mute font-mono text-sm uppercase tracking-widest">Adventure Sequence Completed</p>
+        <p className="mt-3 text-mute font-mono text-sm uppercase tracking-widest">You found all the spots!</p>
 
-        <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3">
+        <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3 text-text">
           <div className="glass rounded-2xl px-3 py-4">
             <p className="font-mono text-[0.62rem] uppercase tracking-[0.14em] text-mute">
-              Adventure Time
+              Your Time
             </p>
             <p className="font-mono mt-2 text-2xl font-semibold tabular-nums text-cyan">
               {formatElapsed(elapsedMs)}
@@ -204,17 +204,17 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
   if (!venue) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-void">
+      <div className="flex min-h-dvh items-center justify-center bg-void text-text">
         <div className="text-center">
           <div className="mb-4 h-10 w-10 animate-spin rounded-full border-2 border-cyan border-t-transparent mx-auto shadow-[0_0_15px_rgba(34,211,238,0.2)]" />
-          <p className="font-mono text-[0.6rem] text-cyan animate-pulse uppercase tracking-[0.3em]">Decoding Next Riddle...</p>
+          <p className="font-mono text-[0.6rem] text-cyan animate-pulse uppercase tracking-[0.3em] italic">Preparing your next clue...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7 font-body">
+    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7 font-body text-text">
       <header className="flex items-start justify-between gap-3 border-b border-white/5 pb-5">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative">
@@ -228,7 +228,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             <div className="flex items-center gap-2 mt-1">
               <span className="h-1 w-1 rounded-full bg-cyan animate-pulse" />
               <p className="font-mono text-[0.55rem] uppercase tracking-widest text-cyan/70">
-                PATHFINDER :: {team.teamId}
+                TEAM :: {team.teamId}
               </p>
             </div>
           </div>
@@ -238,20 +238,20 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             {formatElapsed(elapsedMs)}
           </div>
           <button type="button" className="btn-link !text-[0.6rem] hover:!text-rose transition-colors uppercase tracking-widest" onClick={onLogout}>
-            [ LEAVE ]
+            [ EXIT ]
           </button>
         </div>
       </header>
 
-      {/* Quest Logs */}
+      {/* Game Updates */}
       <div className="mt-6 glass-strong rounded-xl p-3 border border-white/5 font-mono text-[0.6rem] bg-black/40">
         <div className="flex items-center gap-2 mb-2 border-b border-white/5 pb-2">
           <span className="text-cyan font-bold">»</span>
-          <span className="text-mute uppercase tracking-widest font-black">QUEST_LOG</span>
+          <span className="text-mute uppercase tracking-widest font-black">GAME_UPDATES</span>
         </div>
         <div className="space-y-1">
           {logs.map((log, i) => (
-            <div key={i} className={`${log.includes('Invalid') || log.includes('Error') ? 'text-rose' : log.includes('Verified') || log.includes('Success') ? 'text-lime' : 'text-cyan/60'}`}>
+            <div key={i} className={`${log.includes('Wrong') || log.includes('lost') ? 'text-rose' : log.includes('Correct') || log.includes('Stop cleared') ? 'text-lime' : 'text-cyan/60'}`}>
               {log}
             </div>
           ))}
@@ -262,12 +262,12 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
         </div>
       </div>
 
-      {/* Visual Sequence Map */}
+      {/* Progress Map */}
       <section className="glass mt-6 relative overflow-hidden rounded-2xl p-5 border-l-4 border-l-cyan bg-black/20">
         <div className="scanning-line opacity-5" />
         <div className="flex items-center justify-between gap-2 mb-5">
           <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-cyan/80">
-            SEQUENCE_TRACKER
+            PROGRESS_MAP
           </p>
           <div className="px-2 py-0.5 rounded bg-cyan/10 border border-cyan/20">
              <span className="font-mono text-[0.7rem] font-bold text-cyan">STOP {clueNumber} / {totalVenuesCount}</span>
@@ -275,9 +275,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
         </div>
 
         <div className="flex items-center justify-between gap-1 relative px-1">
-           {/* Connecting Line Background */}
            <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 -translate-y-1/2" />
-
            {[...Array(totalVenuesCount)].map((_, i) => (
             <div key={i} className="relative z-10 flex flex-col items-center gap-2">
                <div
@@ -287,7 +285,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
                   }`}
                 />
                 <span className={`font-mono text-[0.5rem] ${i === cleared ? 'text-cyan font-black' : 'text-mute/30'}`}>
-                  {padStop(i+1)}
+                  {i+1}
                 </span>
             </div>
           ))}
@@ -295,10 +293,10 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
         <div className="flex justify-between items-center mt-5 pt-4 border-t border-white/5">
           <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest">
-            {cleared} Completed // {totalVenuesCount - cleared} Locked
+            {cleared} Found // {totalVenuesCount - cleared} Left
           </p>
           <span className="font-mono text-[0.6rem] text-cyan font-black italic">
-            {Math.round(progressPct)}% SYNC
+            {Math.round(progressPct)}% DONE
           </span>
         </div>
       </section>
@@ -308,20 +306,20 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
         <section className="animate-fade-scale mt-6 font-body">
           <div className="flex items-center gap-2 mb-2">
              <div className="h-1 w-8 bg-cyan/40 rounded-full" />
-             <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan">ACTIVE_RIDDLE</p>
+             <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan">YOUR_CLUE</p>
           </div>
           <h1 className="font-display text-2xl font-black leading-tight text-white tracking-tight uppercase">
-            Solve This Mystery
+            Solve the Riddle
           </h1>
 
           <div className="glass-strong glow-border mt-6 rounded-2xl p-6 relative overflow-hidden border-t-2 border-t-cyan/30">
             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-               <BrandMark size="lg" />
+               <span className="text-4xl">?</span>
             </div>
             <div className="mb-6 flex items-center gap-2">
               <span className="h-1.5 w-1.5 rounded-full bg-lime shadow-[0_0_8px_rgba(52,211,153,0.4)] animate-pulse" />
               <span className="font-mono text-[0.55rem] font-black uppercase tracking-[0.2em] text-mute">
-                LOCATION_ENCRYPTION_NODE_{padStop(clueNumber)}
+                MYSTERY_STOP_#{padStop(clueNumber)}
               </span>
             </div>
             <blockquote className="font-display text-[1.25rem] font-bold leading-relaxed text-slate-100 sm:text-[1.5rem] italic">
@@ -331,14 +329,14 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
                <div className="flex items-start gap-3">
                   <span className="font-mono text-cyan text-[0.65rem] font-bold">[!]</span>
                   <p className="text-[0.7rem] leading-relaxed text-mute uppercase font-mono tracking-tighter">
-                    ADVICE: {venue.taskNote}
+                    Tip: {venue.taskNote}
                   </p>
                </div>
               <div className="rounded-xl border border-cyan/10 bg-white/[0.02] p-4 flex items-start gap-3">
                 <span className="text-cyan text-sm">✦</span>
                 <p className="text-[0.7rem] text-slate-400 leading-relaxed font-light">
-                  Find the hidden spot on campus. Once found, locate the code
-                  printed on the back of your physical card and enter it below.
+                  Find this spot on campus. Once there, find the secret code
+                  on the back of your card and enter it below.
                 </p>
               </div>
             </div>
@@ -355,7 +353,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
                 htmlFor="clue-code"
                 className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-mute mb-4 block"
               >
-                INPUT_SECRET_ACCESS_KEY
+                TYPE SECRET CODE
               </label>
               <div className="relative">
                 <input
@@ -377,61 +375,60 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               </div>
               {error && (
                 <p className="mt-4 text-[0.65rem] text-rose font-mono uppercase tracking-widest font-bold" role="alert">
-                  {"[ DENIED ] " + error}
+                  {error}
                 </p>
               )}
             </div>
 
             <button type="submit" className="btn btn-primary w-full !py-5 font-black tracking-[0.2em] uppercase shadow-[0_0_25px_rgba(34,211,238,0.2)]">
-              VERIFY LOCATION
+              CHECK MY ANSWER
             </button>
           </form>
         </section>
       )}
 
-      {/* Confirmation Step */}
+      {/* Confirmation Section */}
       {phase === "confirm" && (
-        <section className="animate-fade-scale mt-6 text-text">
+        <section className="animate-fade-scale mt-6 font-body">
           <button
             type="button"
             className="btn-link !text-[0.65rem] font-black uppercase tracking-widest text-cyan/30 hover:text-cyan"
             onClick={handleWrongPlace}
             disabled={advancing}
           >
-            {"<< ABORT_SCAN / RETURN"}
+            {"<< GO BACK TO RIDDLE"}
           </button>
 
           <p className="font-mono mt-8 text-[0.65rem] font-black uppercase tracking-[0.3em] text-violet">
-            SITE_VISUAL_AUTH
+            LOCATION_CHECK
           </p>
           <h2 className="font-display mt-2 text-[1.8rem] font-black leading-tight text-white tracking-tight uppercase">
-            MATCH DETECTED?
+            Are you here?
           </h2>
           <p className="mt-2 text-sm text-mute font-light italic">
-            Check the site imagery against your physical surroundings.
+            Match this photo with your surroundings.
           </p>
 
           <div className="glass-strong glow-border mt-8 overflow-hidden rounded-2xl border-t-2 border-t-violet/40 bg-black/40">
             <div className="relative aspect-[16/10] bg-void">
               <img
                 src={venue.venueImageUrl}
-                alt={`Stop ${clueNumber}`}
+                alt={`Spot ${clueNumber}`}
                 className="h-full w-full object-cover opacity-80"
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-void via-transparent to-cyan/10" />
               <div className="absolute left-5 top-5">
-                <div className="chip !bg-violet/30 !border-violet/50 !text-white font-black tracking-widest text-[0.55rem]">UPLINK_IMAGE</div>
+                <div className="chip !bg-violet/30 !border-violet/50 !text-white font-black tracking-widest text-[0.55rem] uppercase">Correct Code!</div>
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 to-transparent">
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-cyan font-black shadow-black">
-                  STOP :: {padStop(clueNumber)} // SECTOR :: CONFIRMED
+                  STOP :: {clueNumber} // STATUS :: FOUND
                 </p>
               </div>
             </div>
             <div className="p-6">
-              <p className="text-[0.7rem] leading-relaxed text-mute font-mono uppercase tracking-tighter">
-                CRITERIA: If visual landmarks align with the digital feed, authorize the final handoff.
-                Misalignment requires immediate abort.
+              <p className="text-[0.7rem] leading-relaxed text-mute font-mono uppercase tracking-tighter italic font-light">
+                If this photo matches the place you are standing, click below to continue.
               </p>
             </div>
           </div>
@@ -442,12 +439,12 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               role="status"
             >
               <p className="font-mono text-[0.75rem] font-black uppercase tracking-[0.3em] text-lime">
-                {isLast ? "ADVENTURE_COMPLETE" : "STOP_SECURED"}
+                {isLast ? "MISSION COMPLETE!" : "STOP FOUND!"}
               </p>
               <p className="mt-2 text-[0.6rem] text-lime/70 font-mono tracking-widest uppercase animate-pulse">
                 {isLast
-                  ? "Unlocking Final Treasure..."
-                  : "Calibrating Next Destination..."}
+                  ? "Revealing the treasure..."
+                  : "Next riddle incoming..."}
               </p>
             </div>
           )}
@@ -459,7 +456,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               onClick={handleWrongPlace}
               disabled={advancing}
             >
-              ABORT_SCAN
+              NO - WRONG SPOT
             </button>
             <button
               type="button"
@@ -467,7 +464,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               onClick={handleCorrectPlace}
               disabled={advancing}
             >
-              {advancing ? "UPLINKING..." : "CONFIRM_SITE"}
+              {advancing ? "LOADING..." : "YES - NEXT CLUE"}
             </button>
           </div>
         </section>

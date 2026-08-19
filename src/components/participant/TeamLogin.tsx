@@ -24,12 +24,12 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
     e.preventDefault();
     const digits = normalizePhone(phone);
     if (digits.length !== 10) {
-      flash("Enter your 10-digit mobile number.");
+      flash("Please enter your 10-digit phone number.");
       return;
     }
     const team = loginByLeaderPhone(digits);
     if (!team) {
-      flash("Mobile number not found in our list.");
+      flash("Sorry, this phone number isn't registered.");
       return;
     }
     setError("");
@@ -49,7 +49,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
         </div>
         <div>
           <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan/70">
-            Adventure Start
+            Player Login
           </p>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Team Login
@@ -58,7 +58,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
       </div>
 
       <p className="mt-6 text-sm leading-relaxed text-mute font-light">
-        Enter the mobile number you registered with to start your hunt.
+        Enter your registered phone number to start the hunt.
       </p>
 
       <form
@@ -71,7 +71,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
             htmlFor="leader-phone"
             className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block"
           >
-            Registered Mobile Number
+            Your Phone Number
           </label>
           <div className="relative">
              <input
@@ -82,7 +82,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
               className={`field-input font-mono tracking-[0.3em] !text-center !text-xl !py-4 ${
                 error ? "error" : ""
               } ${shaking ? "animate-shake" : ""}`}
-              placeholder="000000 0000"
+              placeholder="0000000000"
               value={phone}
               onChange={(e) => {
                 const next = e.target.value.replace(/[^\d\s+\-]/g, "").slice(0, 16);
@@ -94,7 +94,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
             />
           </div>
           <p id="phone-help" className="mt-3 text-[0.65rem] text-mute/60 font-mono uppercase tracking-tighter text-center">
-            * 10 digits only
+            * Use the 10-digit number you registered with.
           </p>
           {error && (
             <p id="phone-error" className="mt-4 text-xs text-rose font-mono uppercase tracking-tighter text-center" role="alert">
@@ -104,11 +104,9 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
         </div>
 
         <button type="submit" className="btn btn-primary w-full !py-4 font-black tracking-widest uppercase">
-          START THE ADVENTURE
+          START THE HUNT
         </button>
       </form>
-
-
     </div>
   );
 }
