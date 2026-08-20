@@ -5,12 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Campus Hunt 2026 — Freshers' Treasure Hunt Adventure</title>
     <meta name="description" content="Join the ultimate campus treasure hunt! Solve riddles, find hidden spots, and compete with your team in the Campus Hunt 2026 adventure." />
+
+    <!-- Speed Optimization: Preconnect to external domains -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://images.pexels.com" />
+
+    <!-- Speed Optimization: Preload Critical Fonts -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Syne:wght@700&family=Outfit:wght@400;700&display=swap" as="style" />
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Critical CSS for instant loading of the background -->
+    <style>
+      :root { --color-void: #05070f; }
+      body { background: var(--color-void); margin: 0; }
+      .tech-bg { position: fixed; inset: 0; z-index: 0; background: #05070f; }
+    </style>
   </head>
   <body>
     <div id="root"></div>
