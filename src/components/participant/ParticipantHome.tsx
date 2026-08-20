@@ -175,9 +175,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
           </div>
         </div>
 
-        <h1 className="font-display mt-8 text-[2rem] font-bold leading-tight text-white sm:text-[2.5rem]">
+        <h2 className="font-display mt-8 text-[2rem] font-bold leading-tight text-white sm:text-[2.5rem]">
           GREAT JOB, <span className="text-gradient">{team.teamName.toUpperCase()}</span>!
-        </h1>
+        </h2>
         <p className="mt-3 text-mute font-mono text-sm uppercase tracking-widest">You found all the spots!</p>
 
         <div className="mt-8 grid w-full max-w-sm grid-cols-2 gap-3 text-text">
@@ -222,9 +222,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             <div className="absolute -inset-1 bg-cyan/10 blur-sm rounded-full" />
           </div>
           <div className="min-w-0">
-            <p className="truncate font-display text-lg font-bold leading-tight text-white tracking-tight">
+            <h1 className="truncate font-display text-lg font-bold leading-tight text-white tracking-tight">
               {team.teamName.toUpperCase()}
-            </p>
+            </h1>
             <div className="flex flex-col gap-1 mt-1.5">
               <div className="flex items-center gap-2">
                 <span className="h-1 w-1 rounded-full bg-cyan animate-pulse" />
@@ -322,9 +322,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
              <div className="h-1 w-8 bg-cyan/40 rounded-full" />
              <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan">YOUR_CLUE</p>
           </div>
-          <h1 className="font-display text-2xl font-black leading-tight text-white tracking-tight uppercase">
+          <h2 className="font-display text-2xl font-black leading-tight text-white tracking-tight uppercase">
             Solve the Riddle
-          </h1>
+          </h2>
 
           <div className="glass-strong glow-border mt-6 rounded-2xl p-6 relative overflow-hidden border-t-2 border-t-cyan/30">
             <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
