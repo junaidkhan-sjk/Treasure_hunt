@@ -40,17 +40,16 @@ function AppShell() {
     return (
       <>
         <TechBackground />
-        <div className="flex min-h-dvh items-center justify-center bg-black/20">
-          <div className="text-center space-y-6">
-            <div className="relative h-20 w-20 mx-auto">
-               <div className="absolute inset-0 animate-spin rounded-full border-b-2 border-cyan shadow-[0_0_15px_rgba(34,211,238,0.3)]" />
-               <div className="absolute inset-2 animate-spin rounded-full border-t-2 border-violet shadow-[0_0_15px_rgba(167,139,250,0.3)]" style={{ animationDirection: 'reverse' }} />
-               <div className="absolute inset-0 flex items-center justify-center font-mono text-[0.6rem] text-cyan font-bold uppercase">Uplink</div>
+        <div className="flex min-h-dvh items-center justify-center">
+          <div className="text-center space-y-8">
+            <div className="relative h-24 w-24 mx-auto neo-convex rounded-full flex items-center justify-center">
+               <div className="h-16 w-16 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent" />
+               <div className="absolute inset-0 flex items-center justify-center font-mono text-[0.6rem] text-cyan-600 font-black uppercase">SYNC</div>
             </div>
-            <div className="space-y-2">
-               <p className="font-mono text-cyan text-xs tracking-[0.4em] animate-pulse uppercase">Establishing Satellite Uplink</p>
-               <div className="h-1 w-48 bg-white/5 mx-auto rounded-full overflow-hidden">
-                  <div className="h-full bg-cyan animate-[loading_2s_infinite]" />
+            <div className="space-y-4">
+               <p className="font-mono text-slate-400 text-xs tracking-[0.4em] animate-pulse uppercase font-black">Establishing Satellite Uplink</p>
+               <div className="neo-concave h-2 w-56 mx-auto rounded-full overflow-hidden">
+                  <div className="h-full bg-cyan-400 animate-[loading_2s_infinite]" />
                </div>
             </div>
           </div>
@@ -64,17 +63,17 @@ function AppShell() {
       <>
         <TechBackground />
         <div className="flex min-h-dvh items-center justify-center p-6 text-center">
-          <div className="glass p-8 rounded-2xl border-rose/30 max-w-md">
-            <h1 className="text-rose font-display text-xl font-bold mb-4 uppercase tracking-tighter">Connection Lost</h1>
-            <p className="text-mute text-sm mb-6 font-mono uppercase tracking-tighter leading-relaxed">
-              [CRITICAL] Database credentials missing in your environment.
+          <div className="neo-flat p-10 rounded-3xl max-w-md border-t-4 border-rose-400">
+            <h1 className="text-rose-500 font-display text-2xl font-black mb-4 uppercase tracking-tight">Handshake Failed</h1>
+            <p className="text-slate-500 text-sm mb-8 font-mono uppercase tracking-widest leading-relaxed font-bold">
+              [CRITICAL] Database credentials missing in environment.
             </p>
-            <div className="bg-rose/10 p-5 rounded-xl text-[0.65rem] text-rose/80 font-mono text-left space-y-3 mb-8 border border-rose/20">
-               <p>1. CREATE A FILE NAMED <span className="text-white">.env</span> IN ROOT</p>
-               <p>2. ADD YOUR SUPABASE URL AND ANON KEY</p>
-               <p>3. RESTART THE DEV SERVER</p>
+            <div className="neo-concave p-6 rounded-2xl text-[0.7rem] text-slate-400 font-mono text-left space-y-4 mb-10">
+               <p>1. CREATE <span className="text-slate-800 font-bold">.env</span> IN ROOT</p>
+               <p>2. ADD SUPABASE KEYS</p>
+               <p>3. RESTART SERVER</p>
             </div>
-            <button className="btn btn-primary w-full !py-4 font-black uppercase tracking-widest" onClick={() => window.location.reload()}>RETRY_HANDSHAKE</button>
+            <button className="neo-btn w-full !py-5 font-black uppercase tracking-widest rounded-2xl text-rose-500" onClick={() => window.location.reload()}>RETRY_HANDSHAKE</button>
           </div>
         </div>
       </>

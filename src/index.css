@@ -13,6 +13,9 @@
   --color-lime: #34d399;
   --color-rose: #fb7185;
   --color-amber: #fbbf24;
+  --color-bg-neo: #e0e5ec;
+  --color-shadow-light: #ffffff;
+  --color-shadow-dark: #a3b1c6;
   --font-display: "Syne", system-ui, sans-serif;
   --font-body: "Outfit", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -75,8 +78,8 @@ body {
   margin: 0;
   min-height: 100dvh;
   font-family: var(--font-body);
-  color: var(--color-text);
-  background: var(--color-void);
+  color: #444;
+  background: var(--color-bg-neo);
   overflow-x: hidden;
 }
 
@@ -216,45 +219,54 @@ select:focus-visible {
   color: transparent;
 }
 
-/* ---------- Glass / panels ---------- */
-.glass {
-  background: linear-gradient(
-    145deg,
-    rgba(17, 24, 39, 0.78) 0%,
-    rgba(11, 16, 32, 0.72) 100%
-  );
-  border: 1px solid rgba(34, 211, 238, 0.1);
-  box-shadow:
-    0 0 0 1px rgba(34, 211, 238, 0.04) inset,
-    0 12px 40px rgba(0, 0, 0, 0.35),
-    0 0 20px rgba(34, 211, 238, 0.05);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* ---------- Neomorphism ---------- */
+.neo-flat {
+  background: var(--color-bg-neo);
+  box-shadow: 9px 9px 16px var(--color-shadow-dark),
+             -9px -9px 16px var(--color-shadow-light);
 }
 
-.glass:hover {
-  border-color: rgba(34, 211, 238, 0.3);
-  box-shadow:
-    0 0 0 1px rgba(34, 211, 238, 0.1) inset,
-    0 20px 50px rgba(0, 0, 0, 0.45),
-    0 0 30px rgba(34, 211, 238, 0.1);
+.neo-convex {
+  background: var(--color-bg-neo);
+  box-shadow: 9px 9px 16px var(--color-shadow-dark),
+             -9px -9px 16px var(--color-shadow-light);
+  transition: all 0.2s ease;
+}
+
+.neo-convex:hover {
+  box-shadow: 12px 12px 20px var(--color-shadow-dark),
+             -12px -12px 20px var(--color-shadow-light);
   transform: translateY(-2px);
 }
 
-.glass-strong {
-  background: linear-gradient(
-    160deg,
-    rgba(17, 24, 39, 0.92) 0%,
-    rgba(8, 12, 24, 0.88) 100%
-  );
-  border: 1px solid rgba(34, 211, 238, 0.16);
-  box-shadow:
-    0 0 0 1px rgba(167, 139, 250, 0.05) inset,
-    0 16px 48px rgba(0, 0, 0, 0.45),
-    0 0 40px rgba(34, 211, 238, 0.05);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+.neo-concave {
+  background: var(--color-bg-neo);
+  box-shadow: inset 9px 9px 16px var(--color-shadow-dark),
+             inset -9px -9px 16px var(--color-shadow-light);
+}
+
+.neo-btn {
+  background: var(--color-bg-neo);
+  box-shadow: 6px 6px 12px var(--color-shadow-dark),
+             -6px -6px 12px var(--color-shadow-light);
+  color: #444;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.neo-btn:active {
+  box-shadow: inset 4px 4px 8px var(--color-shadow-dark),
+             inset -4px -4px 8px var(--color-shadow-light);
+  transform: scale(0.98);
+}
+
+.neo-input {
+  background: var(--color-bg-neo);
+  box-shadow: inset 6px 6px 12px var(--color-shadow-dark),
+             inset -6px -6px 12px var(--color-shadow-light);
+  border: none;
+  color: #444;
 }
 
 .glow-border {

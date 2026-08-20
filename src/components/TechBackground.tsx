@@ -1,44 +1,19 @@
 import { useEffect, useState } from "react";
 
 export function TechBackground() {
-  const [binaryData, setBinaryData] = useState<string[]>([]);
-
-  useEffect(() => {
-    // Generate initial binary strings
-    const rows = 20;
-    const cols = 15;
-    const initialBinary = Array.from({ length: rows * cols }, () =>
-      Math.random() > 0.5 ? "1" : "0"
-    );
-    setBinaryData(initialBinary);
-
-    const interval = setInterval(() => {
-      setBinaryData(prev => {
-        if (prev.length === 0) return prev;
-        return prev.map((val) =>
-          Math.random() > 0.95 ? (Math.random() > 0.5 ? "1" : "0") : val
-        );
-      });
-    }, 150);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
-    <div className="tech-bg" aria-hidden="true">
-      <div className="tech-grid" />
-      <div className="binary-rain grid grid-cols-15 gap-2 p-4">
-        {binaryData.map((bit, i) => (
-          <span key={i} className="animate-pulse" style={{ animationDelay: `${(i % 10) * 0.1}s` }}>
-            {bit}
-          </span>
-        ))}
+    <div className="tech-bg" aria-hidden="true" style={{ background: 'var(--color-bg-neo)', opacity: 1 }}>
+      {/* Remove the tech grid and binary rain for a cleaner neomorphic look */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div
+          className="absolute h-96 w-96 rounded-full bg-white/40 blur-3xl"
+          style={{ top: '-10%', left: '-10%' }}
+        />
+        <div
+          className="absolute h-96 w-96 rounded-full bg-slate-400/10 blur-3xl"
+          style={{ bottom: '-10%', right: '-10%' }}
+        />
       </div>
-      <div className="tech-orb tech-orb-a" />
-      <div className="tech-orb tech-orb-b" />
-      <div className="tech-orb tech-orb-c" />
-      <div className="scanlines" />
-      <div className="scanning-line" style={{ opacity: 0.1 }} />
     </div>
   );
 }
