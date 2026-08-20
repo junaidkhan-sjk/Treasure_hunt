@@ -9,7 +9,8 @@ interface TeamLoginProps {
 }
 
 export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
-  const { loginByPhoneDirect } = useHunt();
+  const { loginByPhoneDirect, setEvent } = useHunt();
+  const [eventId, setEventId] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
@@ -25,6 +26,11 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
     e.preventDefault();
     if (isLoggingIn) return;
 
+    if (!eventId.trim()) {
+      flash("Please enter the Event Code.");
+      return;
+    }
+
     const digits = normalizePhone(phone);
     if (digits.length !== 10) {
       flash("Please enter your 10-digit phone number.");
@@ -33,9 +39,13 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
 
     setIsLoggingIn(true);
     try {
+      // First set the event context
+      setEvent(eventId.toUpperCase());
+
+      // Then try direct login in that event context
       const team = await loginByPhoneDirect(digits);
       if (!team) {
-        flash("Sorry, this phone number isn't registered.");
+        flash("Sorry, this phone number isn't registered for this event.");
         return;
       }
       setError("");
@@ -60,7 +70,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
         </div>
         <div>
           <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan/70">
-            Player Login
+            Player Access
           </p>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Team Login
@@ -69,7 +79,7 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
       </div>
 
       <p className="mt-6 text-sm leading-relaxed text-mute font-light">
-        Enter your registered phone number to start the hunt.
+        Enter the Event Code provided by your organizer and your phone number.
       </p>
 
       <form
@@ -78,44 +88,46 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
         noValidate
       >
         <div className={shaking ? "animate-shake" : ""}>
-          <label
-            htmlFor="leader-phone"
-            className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block"
-          >
-            Your Phone Number
-          </label>
-          <div className="relative">
-             <input
-              id="leader-phone"
-              type="tel"
-              inputMode="numeric"
-              autoComplete="tel"
-              className={`field-input font-mono tracking-[0.3em] !text-center !text-xl !py-4 !bg-black/40 !border-white/10 focus:!border-cyan/50 ${
-                error ? "error" : ""
-              }`}
-              placeholder="0000000000"
-              value={phone}
-              onChange={(e) => {
-                const next = e.target.value.replace(/[^\d\s+\-]/g, "").slice(0, 16);
-                setPhone(next);
-                if (error) setError("");
-              }}
-              aria-invalid={!!error}
-              aria-describedby={error ? "phone-error" : "phone-help"}
-            />
+          <div className="space-y-6">
+            <div>
+              <label htmlFor="event-id" className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block">
+                Event Code
+              </label>
+              <input
+                id="event-id"
+                type="text"
+                className="field-input font-mono tracking-widest uppercase !text-center !py-4"
+                placeholder="E.G. CAMPUS-2026"
+                value={eventId}
+                onChange={e => setEventId(e.target.value.toUpperCase())}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="leader-phone" className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block">
+                Your Phone Number
+              </label>
+              <input
+                id="leader-phone"
+                type="tel"
+                inputMode="numeric"
+                className="field-input font-mono tracking-[0.3em] !text-center !text-xl !py-4"
+                placeholder="0000000000"
+                value={phone}
+                onChange={e => setPhone(e.target.value.replace(/[^\d]/g, "").slice(0, 10))}
+              />
+            </div>
           </div>
-          <p id="phone-help" className="mt-3 text-[0.65rem] text-mute/60 font-mono uppercase tracking-tighter text-center italic">
-            * Use your 10-digit registered number.
-          </p>
+
           {error && (
-            <p id="phone-error" className="mt-4 text-xs text-rose font-mono uppercase tracking-tighter text-center font-bold" role="alert">
+            <p className="mt-6 text-xs text-rose font-mono uppercase tracking-tighter text-center font-bold" role="alert">
               {error}
             </p>
           )}
         </div>
 
         <button type="submit" disabled={isLoggingIn} className="btn btn-primary w-full !py-4 font-black tracking-widest uppercase disabled:opacity-50">
-          {isLoggingIn ? "VERIFYING..." : "START THE HUNT"}
+          {isLoggingIn ? "CONNECTING..." : "START THE HUNT"}
         </button>
       </form>
     </div>
