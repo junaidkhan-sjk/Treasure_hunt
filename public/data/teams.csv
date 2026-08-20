@@ -1,7 +1,3 @@
 teamId,teamName,leaderName,leaderPhone,members
-FH-ALPHA,North Gate Navigators,Aarav Mehta,9876543210,"Aarav Mehta, Diya Shah, Kabir Rao, Meera Iyer"
-FH-BRAVO,Brass Compass,Rohan Das,9876543211,"Rohan Das, Sneha Kapoor, Vikram Nair, Ananya Bose"
-FH-CHARLIE,Moss Trailers,Ishaan Patel,9876543212,"Ishaan Patel, Pooja Reddy, Arjun Sen, Nisha Verma"
-FH-DELTA,Rust & Relic,Yash Malhotra,9876543213,"Yash Malhotra, Kriti Jain, Devansh Gill, Sara Khan"
-FH-ECHO,Quiet Stack,Nikhil Roy,9876543214,"Nikhil Roy, Tanya Bhatt, Harsh Vora, Lila Menon"
-FH-TEST,Test Team,Admin User,9301900147,"Admin User, Tester 1"
+FH-ALPHA,Alpha Squad,Admin,9301900147,"Member 1, Member 2, Member 3"
+FH-BETA,Beta Voyagers,Rohan,9876543210,"Member A, Member B"
