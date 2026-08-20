@@ -1,11 +1,12 @@
 import SHA256 from "crypto-js/sha256";
 
 /**
- * Field Hunt — Database Schema
+ * Field Hunt — Multi-Tenant Schema
  */
 
 export interface Venue {
   id: string;
+  eventId: string; // Key for multi-tenancy
   orderId: number;
   name: string;
   locationLabel: string;
@@ -18,6 +19,7 @@ export interface Venue {
 
 export interface Team {
   teamId: string;
+  eventId: string; // Key for multi-tenancy
   teamName: string;
   leaderName: string;
   leaderPhone: string;
@@ -27,8 +29,6 @@ export interface Team {
   startedAt: number | null;
   finishedAt: number | null;
 }
-
-export const JUDGE_ACCESS_CODE = "0786";
 
 export type ParticipantPhase = "hint" | "confirm";
 
@@ -44,26 +44,23 @@ export function phonesMatch(input: string, expected: string): boolean {
   return a.length === 10 && a === b;
 }
 
-export function judgeCodeMatch(input: string): boolean {
+/** Check access code against hashed version. Fallback for '0786' if event is new */
+export function judgeCodeMatch(input: string, eventAdminHash?: string): boolean {
   const hashedInput = SHA256(input.trim().toUpperCase()).toString();
-  const expectedHash = "27ed5b43a1c87bdf97934b51528c17cf26f3e34ba4328041da951caad6dcd884";
-  return hashedInput === expectedHash;
-}
 
-export function normalizeKey(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, " ");
+  // If no specific hash is provided, use the global default '0786'
+  if (!eventAdminHash) {
+    return hashedInput === "27ed5b43a1c87bdf97934b51528c17cf26f3e34ba4328041da951caad6dcd884";
+  }
+
+  return hashedInput === eventAdminHash;
 }
 
 export function codesMatch(input: string, expected: string): boolean {
   const normalizedInput = input.trim().toUpperCase().replace(/[-\s]/g, "");
   const hashedInput = SHA256(normalizedInput).toString();
-
-  // High Security: Match the hash
   if (hashedInput === expected) return true;
-
-  // Fallback: If DB contains plain text (useful for emergency debugging)
   if (normalizedInput === expected.trim().toUpperCase()) return true;
-
   return false;
 }
 
@@ -75,6 +72,7 @@ export function padStop(n: number): string {
 export function mapDbTeam(row: any): Team {
   return {
     teamId: row.team_id,
+    eventId: row.event_id || 'default',
     teamName: row.team_name,
     leaderName: row.leader_name,
     leaderPhone: row.leader_phone,
@@ -90,6 +88,7 @@ export function mapDbTeam(row: any): Team {
 export function mapTeamToDb(team: Team) {
   return {
     team_id: team.teamId,
+    event_id: team.eventId,
     team_name: team.teamName,
     leader_name: team.leaderName,
     leader_phone: team.leaderPhone,
@@ -105,6 +104,7 @@ export function mapTeamToDb(team: Team) {
 export function mapDbVenue(row: any): Venue {
   return {
     id: row.id,
+    eventId: row.event_id || 'default',
     orderId: row.order_id,
     name: row.name,
     locationLabel: row.location_label,
@@ -120,6 +120,7 @@ export function mapDbVenue(row: any): Venue {
 export function mapVenueToDb(venue: Venue) {
   return {
     id: venue.id,
+    event_id: venue.eventId,
     order_id: venue.orderId,
     name: venue.name,
     location_label: venue.locationLabel,

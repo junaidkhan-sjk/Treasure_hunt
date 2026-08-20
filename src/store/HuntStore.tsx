@@ -33,7 +33,9 @@ interface HuntContextValue {
   venues: Venue[];
   currentClue: Venue | null;
   loading: boolean;
+  activeEventId: string | null;
   totalVenuesCount: number;
+  setEvent: (eventId: string) => void;
   getTeam: (teamId: string) => Team | undefined;
   loginByLeaderPhone: (phone: string) => Team | null;
   loginByPhoneDirect: (phone: string) => Promise<Team | null>;
@@ -57,19 +59,33 @@ interface HuntContextValue {
 const HuntContext = createContext<HuntContextValue | null>(null);
 
 export function HuntProvider({ children }: { children: ReactNode }) {
+  const [activeEventId, setActiveEventId] = useState<string | null>(null);
   const [teams, setTeams] = useState<Team[]>([]);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [currentClue, setCurrentClue] = useState<Venue | null>(null);
   const [totalVenuesCount, setTotalVenuesCount] = useState(0);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // 1. Initial Data Fetch
+  // Set Event and Start Fetching
+  const setEvent = (eventId: string) => {
+    const normalized = eventId.trim().toUpperCase();
+    setActiveEventId(normalized);
+    setLoading(true);
+  };
+
   const fetchData = useCallback(async () => {
+    if (!activeEventId) return;
+
     try {
-      const { data: teamsData, error: tErr } = await supabase.from('teams').select('*');
+      const { data: teamsData, error: tErr } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('event_id', activeEventId);
+
       const { data: venuesData, count, error: vErr } = await supabase
         .from('venues')
         .select('*', { count: 'exact' })
+        .eq('event_id', activeEventId)
         .order('order_id', { ascending: true });
 
       if (tErr) console.error("Teams fetch error:", tErr);
@@ -83,17 +99,23 @@ export function HuntProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [activeEventId]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  // 2. Real-time Subscriptions
+  // Real-time Subscriptions
   useEffect(() => {
-    const teamsChannel = supabase
-      .channel('db-changes')
-      .on('postgres_changes', { event: '*', table: 'teams' }, (payload) => {
+    if (!activeEventId) return;
+
+    const channel = supabase
+      .channel(`event-${activeEventId}`)
+      .on('postgres_changes', {
+          event: '*',
+          table: 'teams',
+          filter: `event_id=eq.${activeEventId}`
+      }, (payload) => {
           if (payload.eventType === 'INSERT') {
               setTeams(prev => [...prev, mapDbTeam(payload.new)]);
           } else if (payload.eventType === 'UPDATE') {
@@ -102,30 +124,33 @@ export function HuntProvider({ children }: { children: ReactNode }) {
               setTeams(prev => prev.filter(t => t.teamId !== payload.old.team_id));
           }
       })
-      .on('postgres_changes', { event: '*', table: 'venues' }, () => fetchData())
+      .on('postgres_changes', {
+          event: '*',
+          table: 'venues',
+          filter: `event_id=eq.${activeEventId}`
+      }, () => fetchData())
       .subscribe();
 
     return () => {
-      supabase.removeChannel(teamsChannel);
+      supabase.removeChannel(channel);
     };
-  }, [fetchData]);
+  }, [activeEventId, fetchData]);
 
   const refreshCurrentClue = useCallback(async (levelIndex: number) => {
+    if (!activeEventId) return;
     const { data, error } = await supabase
       .from('venues')
       .select('*')
+      .eq('event_id', activeEventId)
       .eq('order_id', levelIndex + 1)
       .maybeSingle();
 
-    if (error) console.error("Clue fetch error:", error);
     if (data) setCurrentClue(mapDbVenue(data));
-  }, []);
+  }, [activeEventId]);
 
   const loginJudge = useCallback((accessCode: string) => {
-    const ok = judgeCodeMatch(accessCode);
-    if (ok) fetchData();
-    return ok;
-  }, [fetchData]);
+    return judgeCodeMatch(accessCode);
+  }, []);
 
   const getTeam = useCallback(
     (teamId: string) => teams.find((t) => t.teamId.toUpperCase() === teamId.trim().toUpperCase()),
@@ -137,49 +162,33 @@ export function HuntProvider({ children }: { children: ReactNode }) {
     [teams]
   );
 
-  // Fallback direct DB login if state is stale
   const loginByPhoneDirect = useCallback(async (phone: string) => {
+    if (!activeEventId) return null;
     const localTeam = teams.find((t) => phonesMatch(phone, t.leaderPhone));
     if (localTeam) return localTeam;
 
-    const { data, error } = await supabase.from('teams').select('*');
+    const { data, error } = await supabase.from('teams').select('*').eq('event_id', activeEventId);
     if (!error && data) {
        const freshTeams = data.map(mapDbTeam);
        setTeams(freshTeams);
        return freshTeams.find(t => phonesMatch(phone, t.leaderPhone)) || null;
     }
     return null;
-  }, [teams]);
+  }, [activeEventId, teams]);
 
   const ensureStarted = useCallback(async (teamId: string) => {
     const team = teams.find(t => t.teamId === teamId);
     if (!team || team.startedAt) return;
-    await supabase.from('teams').update({ started_at: Date.now() }).eq('team_id', teamId);
-  }, [teams]);
+    await supabase.from('teams').update({ started_at: Date.now() }).eq('team_id', teamId).eq('event_id', activeEventId);
+  }, [teams, activeEventId]);
 
   const checkClueCode = useCallback(
     async (teamId: string, code: string): Promise<CodeCheckResult> => {
-      console.log(`[AUTH] Validating node for team: ${teamId}...`);
-
-      try {
-        const { data, error } = await supabase.functions.invoke('verify-clue', {
-          body: { team_id: teamId, submitted_code: code }
-        });
-
-        if (!error && data && typeof data.ok === 'boolean') {
-          if (data.ok) return { ok: true };
-          return { ok: false, message: data.message || "Invalid code." };
-        }
-      } catch (err) {
-        console.warn("[AUTH] Edge Function unavailable, falling back to secure local check.");
-      }
-
       if (currentClue) {
         const isMatch = codesMatch(code, currentClue.correctCode);
         if (isMatch) return { ok: true };
       }
-
-      return { ok: false, message: "Invalid code. Check your clue paper and try again." };
+      return { ok: false, message: "Invalid code. Check your clue and try again." };
     },
     [currentClue]
   );
@@ -187,7 +196,7 @@ export function HuntProvider({ children }: { children: ReactNode }) {
   const confirmAndAdvance = useCallback(
     (teamId: string): VerifyResult => {
       const team = teams.find((t) => t.teamId === teamId);
-      if (!team) return { ok: false, message: "Team not found." };
+      if (!team || !activeEventId) return { ok: false, message: "Team not found." };
 
       const nextLevel = team.currentLevelIndex + 1;
       const finished = nextLevel >= totalVenuesCount;
@@ -198,146 +207,150 @@ export function HuntProvider({ children }: { children: ReactNode }) {
         last_completion_at: now,
         started_at: team.startedAt ?? now,
         finished_at: finished ? now : null,
-      }).eq('team_id', teamId).then(({error}) => {
+      }).eq('team_id', teamId).eq('event_id', activeEventId).then(({error}) => {
         if (error) console.error("Advancement error:", error);
       });
 
       return { ok: true, finished, nextLevel };
     },
-    [teams, totalVenuesCount]
+    [teams, totalVenuesCount, activeEventId]
   );
 
   // Admin Ops
   const updateTeamDetails = useCallback(async (teamId: string, teamName: string, leaderName: string, leaderPhone: string, members: string[]) => {
-    // Optimistic Update
+    if (!activeEventId) return;
     setTeams(prev => prev.map(t => t.teamId === teamId ? { ...t, teamName, leaderName, leaderPhone, members } : t));
-
     await supabase.from('teams').update({
       team_name: teamName,
       leader_name: leaderName,
       leader_phone: leaderPhone,
       members: members
-    }).eq('team_id', teamId);
-  }, []);
+    }).eq('team_id', teamId).eq('event_id', activeEventId);
+  }, [activeEventId]);
 
   const addTeam = useCallback(async (team: Team) => {
-    // Optimistic Update
-    setTeams(prev => [...prev, team]);
-
-    const { error } = await supabase.from('teams').insert([mapTeamToDb(team)]);
+    if (!activeEventId) return;
+    const teamWithEvent = { ...team, eventId: activeEventId };
+    setTeams(prev => [...prev, teamWithEvent]);
+    const { error } = await supabase.from('teams').insert([mapTeamToDb(teamWithEvent)]);
     if (error) {
         console.error("Add team error:", error);
-        fetchData(); // Rollback/Sync
+        fetchData();
     }
-  }, [fetchData]);
+  }, [activeEventId, fetchData]);
 
   const deleteTeam = useCallback(async (teamId: string) => {
+    if (!activeEventId) return;
     setTeams(prev => prev.filter(t => t.teamId !== teamId));
-    await supabase.from('teams').delete().eq('team_id', teamId);
-  }, []);
+    await supabase.from('teams').delete().eq('team_id', teamId).eq('event_id', activeEventId);
+  }, [activeEventId]);
 
   const setTeamLevel = useCallback(async (teamId: string, level: number) => {
+    if (!activeEventId) return;
     setTeams(prev => prev.map(t => t.teamId === teamId ? { ...t, currentLevelIndex: level } : t));
-    await supabase.from('teams').update({ current_level_index: level, finished_at: level >= totalVenuesCount ? Date.now() : null }).eq('team_id', teamId);
-  }, [totalVenuesCount]);
+    await supabase.from('teams').update({ current_level_index: level, finished_at: level >= totalVenuesCount ? Date.now() : null }).eq('team_id', teamId).eq('event_id', activeEventId);
+  }, [activeEventId, totalVenuesCount]);
 
   const addVenue = useCallback(async (venue: Venue) => {
-    await supabase.from('venues').insert([mapVenueToDb(venue)]);
+    if (!activeEventId) return;
+    const venueWithEvent = { ...venue, eventId: activeEventId };
+    await supabase.from('venues').insert([mapVenueToDb(venueWithEvent)]);
     fetchData();
-  }, [fetchData]);
+  }, [activeEventId, fetchData]);
 
   const updateVenue = useCallback(async (venueId: string, updates: Partial<Venue>) => {
+    if (!activeEventId) return;
     const dbUpdates: any = {};
     if (updates.name) dbUpdates.name = updates.name;
     if (updates.hintText) dbUpdates.hint_text = updates.hintText;
-    await supabase.from('venues').update(dbUpdates).eq('id', venueId);
-  }, []);
+    await supabase.from('venues').update(dbUpdates).eq('id', venueId).eq('event_id', activeEventId);
+  }, [activeEventId]);
 
   const deleteVenue = useCallback(async (venueId: string) => {
-    await supabase.from('venues').delete().eq('id', venueId);
+    if (!activeEventId) return;
+    await supabase.from('venues').delete().eq('id', venueId).eq('event_id', activeEventId);
     fetchData();
-  }, [fetchData]);
+  }, [activeEventId, fetchData]);
 
   const resetTeam = useCallback(async (teamId: string) => {
-    await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null }).eq('team_id', teamId);
-  }, []);
+    if (!activeEventId) return;
+    await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null }).eq('team_id', teamId).eq('event_id', activeEventId);
+  }, [activeEventId]);
 
   const resetAllProgress = useCallback(async () => {
-    await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null });
-  }, []);
+    if (!activeEventId) return;
+    await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null }).eq('event_id', activeEventId);
+  }, [activeEventId]);
 
   const seedDefaultHunt = useCallback(async () => {
+    if (!activeEventId) return;
     setLoading(true);
     try {
-      // 1. Clear existing venues
-      await supabase.from('venues').delete().neq('id', '0');
-
-      // 2. Insert default 7 stops
+      await supabase.from('venues').delete().eq('event_id', activeEventId);
       const defaults: Venue[] = [
         {
-          id: 'v1', orderId: 1, name: '4th Floor', locationLabel: 'F Block',
+          id: `v1-${activeEventId}`, eventId: activeEventId, orderId: 1, name: '4th Floor', locationLabel: 'F Block',
           hintText: 'Climb high where the air is thin and the view is wide; find the spot where F-block touches the sky.',
           venueImageUrl: 'https://images.pexels.com/photos/13003822/pexels-photo-13003822.jpeg',
-          correctCode: 'FLR01', coordinatorName: 'Charan', taskNote: 'Find the code on the notice board near the lift.'
+          correctCode: 'FLR01', coordinatorName: 'Charan', taskNote: 'Find the code near the lift notice board.'
         },
         {
-          id: 'v2', orderId: 2, name: 'Library', locationLabel: 'Reading Wing',
+          id: `v2-${activeEventId}`, eventId: activeEventId, orderId: 2, name: 'Library', locationLabel: 'Reading Wing',
           hintText: 'Turn pages softly, then follow the glow; where stories are silent, your next mark will show.',
           venueImageUrl: 'https://images.pexels.com/photos/5759484/pexels-photo-5759484.jpeg',
-          correctCode: 'LIB02', coordinatorName: 'Vinamra', taskNote: 'Look behind the main entrance pillar for the code.'
+          correctCode: 'LIB02', coordinatorName: 'Vinamra', taskNote: 'Behind the entrance pillar.'
         },
         {
-          id: 'v3', orderId: 3, name: 'Yagya Shala', locationLabel: 'Sacred Area',
+          id: `v3-${activeEventId}`, eventId: activeEventId, orderId: 3, name: 'Yagya Shala', locationLabel: 'Sacred Area',
           hintText: 'From sacred smoke, let the spirit rise; seek the place where tradition meets the freshers eyes.',
           venueImageUrl: 'https://images.pexels.com/photos/37826466/pexels-photo-37826466.jpeg',
-          correctCode: 'YGY03', coordinatorName: 'Ahmad', taskNote: 'Find the code near the offering entrance.'
+          correctCode: 'YGY03', coordinatorName: 'Ahmad', taskNote: 'Near the offering entrance.'
         },
         {
-          id: 'v4', orderId: 4, name: 'Admin', locationLabel: 'Main Counter',
+          id: `v4-${activeEventId}`, eventId: activeEventId, orderId: 4, name: 'Admin', locationLabel: 'Main Counter',
           hintText: 'Forms may wait, but your quest will not stand; find the place where the campus rules the land.',
           venueImageUrl: 'https://images.pexels.com/photos/31139015/pexels-photo-31139015.jpeg',
-          correctCode: 'ADM04', coordinatorName: 'Anjali', taskNote: 'Look under the reception desk ledge.'
+          correctCode: 'ADM04', coordinatorName: 'Anjali', taskNote: 'Under the reception desk ledge.'
         },
         {
-          id: 'v5', orderId: 5, name: 'Sport Complex', locationLabel: 'Main Field',
+          id: `v5-${activeEventId}`, eventId: activeEventId, orderId: 5, name: 'Sport Complex', locationLabel: 'Main Field',
           hintText: 'Where jerseys and whistles meet, the competition is fire; find the coach who watches the goal line higher.',
           venueImageUrl: 'https://images.pexels.com/photos/36393288/pexels-photo-36393288.jpeg',
-          correctCode: 'SPT05', coordinatorName: 'Shivam', taskNote: 'Locate the volunteer near the sports equipment room.'
+          correctCode: 'SPT05', coordinatorName: 'Shivam', taskNote: 'Near sports equipment room.'
         },
         {
-          id: 'v6', orderId: 6, name: 'Main Gate', locationLabel: 'Entrance Portal',
+          id: `v6-${activeEventId}`, eventId: activeEventId, orderId: 6, name: 'Main Gate', locationLabel: 'Entrance Portal',
           hintText: 'The gateway to knowledge stands wide and tall; where everyone enters, find the start for all.',
           venueImageUrl: 'https://images.pexels.com/photos/29704449/pexels-photo-29704449.jpeg',
-          correctCode: 'GAT06', coordinatorName: 'Shubhi', taskNote: 'The code is with the security guard at the gate.'
+          correctCode: 'GAT06', coordinatorName: 'Shubhi', taskNote: 'With the security guard.'
         },
         {
-          id: 'v7', orderId: 7, name: 'Seminar Hall', locationLabel: 'Final Destination',
+          id: `v7-${activeEventId}`, eventId: activeEventId, orderId: 7, name: 'Seminar Hall', locationLabel: 'Final Destination',
           hintText: 'Your last target is where lecture echoes call; once inside the hall, the treasure reveals to all.',
           venueImageUrl: 'https://images.pexels.com/photos/29704449/pexels-photo-29704449.jpeg',
-          correctCode: 'HAL07', coordinatorName: 'Shubhranshu', taskNote: 'Final stop! Enter the hall code to finish your journey.'
+          correctCode: 'HAL07', coordinatorName: 'Shubhranshu', taskNote: 'Enter the hall code to finish.'
         }
       ];
-
-      const { error } = await supabase.from('venues').insert(defaults.map(mapVenueToDb));
-      if (error) throw error;
-
+      await supabase.from('venues').insert(defaults.map(mapVenueToDb));
       await fetchData();
     } catch (error) {
       console.error("Seed error:", error);
     } finally {
       setLoading(false);
     }
-  }, [fetchData]);
+  }, [activeEventId, fetchData]);
 
   const value = useMemo(
     () => ({
-      teams, venues, currentClue, loading, totalVenuesCount, getTeam, loginByLeaderPhone, loginByPhoneDirect,
+      teams, venues, currentClue, loading, totalVenuesCount, activeEventId, setEvent,
+      getTeam, loginByLeaderPhone, loginByPhoneDirect,
       loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
       updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
       deleteVenue, resetTeam, resetAllProgress, seedDefaultHunt
     }),
     [
-      teams, venues, currentClue, loading, totalVenuesCount, getTeam, loginByLeaderPhone, loginByPhoneDirect,
+      teams, venues, currentClue, loading, totalVenuesCount, activeEventId, setEvent,
+      getTeam, loginByLeaderPhone, loginByPhoneDirect,
       loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
       updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
       deleteVenue, resetTeam, resetAllProgress, seedDefaultHunt
