@@ -427,8 +427,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             <div className="relative aspect-[16/10] bg-void">
               <img
                 src={venue.venueImageUrl}
-                alt={`Spot ${clueNumber}`}
+                alt={`Photo of the campus location for Stop ${clueNumber}`}
                 className="h-full w-full object-cover opacity-80"
+                loading="lazy"
               />
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-void via-transparent to-cyan/10" />
               <div className="absolute left-5 top-5">
