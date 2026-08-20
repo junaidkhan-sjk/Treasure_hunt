@@ -9,9 +9,10 @@ interface TeamLoginProps {
 }
 
 export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
-  const { loginByLeaderPhone } = useHunt();
+  const { loginByPhoneDirect } = useHunt();
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [shaking, setShaking] = useState(false);
 
   const flash = (msg: string) => {
@@ -20,20 +21,30 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
     window.setTimeout(() => setShaking(false), 450);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (isLoggingIn) return;
+
     const digits = normalizePhone(phone);
     if (digits.length !== 10) {
       flash("Please enter your 10-digit phone number.");
       return;
     }
-    const team = loginByLeaderPhone(digits);
-    if (!team) {
-      flash("Sorry, this phone number isn't registered.");
-      return;
+
+    setIsLoggingIn(true);
+    try {
+      const team = await loginByPhoneDirect(digits);
+      if (!team) {
+        flash("Sorry, this phone number isn't registered.");
+        return;
+      }
+      setError("");
+      onSuccess(team.teamId);
+    } catch (err) {
+      flash("Uplink error. Check your connection.");
+    } finally {
+      setIsLoggingIn(false);
     }
-    setError("");
-    onSuccess(team.teamId);
   };
 
   return (
@@ -103,8 +114,8 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
           )}
         </div>
 
-        <button type="submit" className="btn btn-primary w-full !py-4 font-black tracking-widest uppercase">
-          START THE HUNT
+        <button type="submit" disabled={isLoggingIn} className="btn btn-primary w-full !py-4 font-black tracking-widest uppercase disabled:opacity-50">
+          {isLoggingIn ? "ESTABLISHING UPLINK..." : "START THE HUNT"}
         </button>
       </form>
     </div>

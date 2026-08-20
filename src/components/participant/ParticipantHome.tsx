@@ -225,16 +225,25 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             <p className="truncate font-display text-lg font-bold leading-tight text-white tracking-tight">
               {team.teamName.toUpperCase()}
             </p>
-            <div className="flex flex-col gap-0.5 mt-1">
+            <div className="flex flex-col gap-1 mt-1.5">
               <div className="flex items-center gap-2">
                 <span className="h-1 w-1 rounded-full bg-cyan animate-pulse" />
                 <p className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-cyan/70">
-                  LEADER :: {team.leaderName}
+                  LEADER :: {team.leaderName.toUpperCase()}
                 </p>
               </div>
-              <p className="font-mono text-[0.5rem] uppercase tracking-widest text-mute/40">
-                TEAM_ID :: {team.teamId}
-              </p>
+              {team.members.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                   <p className="font-mono text-[0.45rem] uppercase tracking-tighter text-mute/40">CREW ::</p>
+                   {team.members.slice(0, 3).map((m, i) => (
+                     <span key={i} className="font-mono text-[0.5rem] uppercase tracking-tight text-mute/60">
+                        {m.split(' ')[0]}
+                        {i < Math.min(team.members.length, 3) - 1 && <span className="mx-1 opacity-30">•</span>}
+                     </span>
+                   ))}
+                   {team.members.length > 3 && <span className="text-[0.45rem] font-mono text-cyan/40">+{team.members.length - 3}</span>}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -305,43 +314,6 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
           </span>
         </div>
       </section>
-
-      {/* Team Crew Info */}
-      <div className="mt-6 glass rounded-2xl p-5 border-t border-white/5 bg-black/10">
-        <div className="flex items-center justify-between gap-2 mb-4">
-          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-magenta/70">
-            UNIT_ROSTER
-          </p>
-          <div className="h-px flex-1 bg-white/5" />
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full bg-cyan/10 border border-cyan/30 flex items-center justify-center font-mono text-[0.6rem] text-cyan font-bold">LDR</div>
-             <div>
-                <p className="font-mono text-[0.5rem] text-mute uppercase tracking-widest">Team Leader</p>
-                <p className="font-display text-sm font-black text-white uppercase tracking-wide">{team.leaderName}</p>
-             </div>
-          </div>
-
-          <div className="pt-4 border-t border-white/5">
-             <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest mb-3">Crew Members</p>
-             <div className="flex flex-wrap gap-2">
-                {team.members.map((m) => (
-                  <span
-                    key={m}
-                    className="rounded border border-white/5 bg-white/5 px-2.5 py-1 font-mono text-[0.6rem] text-mute uppercase tracking-tighter hover:text-cyan transition-colors"
-                  >
-                    # {m}
-                  </span>
-                ))}
-                {team.members.length === 0 && (
-                  <span className="text-[0.6rem] font-mono text-mute/30 italic">No other members registered.</span>
-                )}
-             </div>
-          </div>
-        </div>
-      </div>
 
       {/* Current Riddle */}
       {phase === "hint" && (

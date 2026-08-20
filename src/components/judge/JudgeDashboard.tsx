@@ -322,11 +322,12 @@ function AddTeamRow({ onCancel, onAdd }: { onCancel: () => void, onAdd: (team: T
   const [teamName, setTeamName] = useState("");
   const [leaderName, setLeaderName] = useState("");
   const [leaderPhone, setLeaderPhone] = useState("");
+  const [members, setMembers] = useState("");
 
   return (
     <tr className="bg-cyan/5 border-y border-cyan/20">
-      <td colSpan={6} className="!p-4">
-        <div className="grid grid-cols-4 gap-4">
+      <td colSpan={6} className="!p-4 text-text">
+        <div className="grid grid-cols-5 gap-4">
           <div className="space-y-1">
             <span className="text-[0.5rem] font-bold text-cyan/70 uppercase">TEAM ID</span>
             <input className="field-input !py-2 !text-xs font-mono uppercase bg-black/60" placeholder="e.g. TEAM-01" value={teamId} onChange={e => setTeamId(e.target.value)} />
@@ -343,12 +344,18 @@ function AddTeamRow({ onCancel, onAdd }: { onCancel: () => void, onAdd: (team: T
             <span className="text-[0.5rem] font-bold text-cyan/70 uppercase">MOBILE NUMBER</span>
             <input className="field-input !py-2 !text-xs font-mono uppercase bg-black/60" placeholder="PHONE" value={leaderPhone} onChange={e => setLeaderPhone(e.target.value)} />
           </div>
+          <div className="space-y-1">
+            <span className="text-[0.5rem] font-bold text-cyan/70 uppercase">MEMBERS (CSV)</span>
+            <input className="field-input !py-2 !text-xs font-mono uppercase bg-black/60" placeholder="M1, M2..." value={members} onChange={e => setMembers(e.target.value)} />
+          </div>
         </div>
       </td>
       <td className="!p-4">
         <div className="flex flex-col gap-2">
           <button className="btn btn-primary !min-h-[30px] !text-[0.6rem] font-black uppercase" onClick={() => onAdd({
-            teamId, teamName, leaderName, leaderPhone, members: [], currentLevelIndex: 0, lastCompletionAt: null, startedAt: null, finishedAt: null
+            teamId, teamName, leaderName, leaderPhone,
+            members: members.split(',').map(m => m.trim()).filter(m => m !== ""),
+            currentLevelIndex: 0, lastCompletionAt: null, startedAt: null, finishedAt: null
           })}>SAVE TEAM</button>
           <button className="btn btn-ghost !min-h-[30px] !text-[0.6rem] font-black uppercase" onClick={onCancel}>CANCEL</button>
         </div>
