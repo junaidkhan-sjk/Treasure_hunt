@@ -28,7 +28,7 @@ export interface Team {
   finishedAt: number | null;
 }
 
-export const JUDGE_ACCESS_CODE = "9301900147";
+export const JUDGE_ACCESS_CODE = "0786";
 
 export type ParticipantPhase = "hint" | "confirm";
 
@@ -46,7 +46,7 @@ export function phonesMatch(input: string, expected: string): boolean {
 
 export function judgeCodeMatch(input: string): boolean {
   const hashedInput = SHA256(input.trim().toUpperCase()).toString();
-  const expectedHash = "5ea01e438e99a9f9e2a3069df84bcb50d165351d2ded73f06af3ef73027a4c30";
+  const expectedHash = "27ed5b43a1c87bdf97934b51528c17cf26f3e34ba4328041da951caad6dcd884";
   return hashedInput === expectedHash;
 }
 

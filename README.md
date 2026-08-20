@@ -44,7 +44,7 @@ A high-stakes, interactive treasure hunt web application designed for freshers' 
 
 3. **Access Developer Mode:**
    - Go to "Judge Monitor"
-   - Access Code: `9301900147`
+   - Access Code: `0786`
 
 ## 🛡 Security Note
 
