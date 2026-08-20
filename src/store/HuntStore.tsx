@@ -51,6 +51,7 @@ interface HuntContextValue {
   deleteVenue: (venueId: string) => void;
   resetTeam: (teamId: string) => void;
   resetAllProgress: () => void;
+  seedDefaultHunt: () => Promise<void>;
 }
 
 const HuntContext = createContext<HuntContextValue | null>(null);
@@ -265,18 +266,81 @@ export function HuntProvider({ children }: { children: ReactNode }) {
     await supabase.from('teams').update({ current_level_index: 0, last_completion_at: null, started_at: null, finished_at: null });
   }, []);
 
+  const seedDefaultHunt = useCallback(async () => {
+    setLoading(true);
+    try {
+      // 1. Clear existing venues
+      await supabase.from('venues').delete().neq('id', '0');
+
+      // 2. Insert default 7 stops
+      const defaults: Venue[] = [
+        {
+          id: 'v1', orderId: 1, name: '4th Floor', locationLabel: 'F Block',
+          hintText: 'Climb high where the air is thin and the view is wide; find the spot where F-block touches the sky.',
+          venueImageUrl: 'https://images.pexels.com/photos/13003822/pexels-photo-13003822.jpeg',
+          correctCode: 'FLR01', coordinatorName: 'Charan', taskNote: 'Find the code on the notice board near the lift.'
+        },
+        {
+          id: 'v2', orderId: 2, name: 'Library', locationLabel: 'Reading Wing',
+          hintText: 'Turn pages softly, then follow the glow; where stories are silent, your next mark will show.',
+          venueImageUrl: 'https://images.pexels.com/photos/5759484/pexels-photo-5759484.jpeg',
+          correctCode: 'LIB02', coordinatorName: 'Vinamra', taskNote: 'Look behind the main entrance pillar for the code.'
+        },
+        {
+          id: 'v3', orderId: 3, name: 'Yagya Shala', locationLabel: 'Sacred Area',
+          hintText: 'From sacred smoke, let the spirit rise; seek the place where tradition meets the freshers eyes.',
+          venueImageUrl: 'https://images.pexels.com/photos/37826466/pexels-photo-37826466.jpeg',
+          correctCode: 'YGY03', coordinatorName: 'Ahmad', taskNote: 'Find the code near the offering entrance.'
+        },
+        {
+          id: 'v4', orderId: 4, name: 'Admin', locationLabel: 'Main Counter',
+          hintText: 'Forms may wait, but your quest will not stand; find the place where the campus rules the land.',
+          venueImageUrl: 'https://images.pexels.com/photos/31139015/pexels-photo-31139015.jpeg',
+          correctCode: 'ADM04', coordinatorName: 'Anjali', taskNote: 'Look under the reception desk ledge.'
+        },
+        {
+          id: 'v5', orderId: 5, name: 'Sport Complex', locationLabel: 'Main Field',
+          hintText: 'Where jerseys and whistles meet, the competition is fire; find the coach who watches the goal line higher.',
+          venueImageUrl: 'https://images.pexels.com/photos/36393288/pexels-photo-36393288.jpeg',
+          correctCode: 'SPT05', coordinatorName: 'Shivam', taskNote: 'Locate the volunteer near the sports equipment room.'
+        },
+        {
+          id: 'v6', orderId: 6, name: 'Main Gate', locationLabel: 'Entrance Portal',
+          hintText: 'The gateway to knowledge stands wide and tall; where everyone enters, find the start for all.',
+          venueImageUrl: 'https://images.pexels.com/photos/29704449/pexels-photo-29704449.jpeg',
+          correctCode: 'GAT06', coordinatorName: 'Shubhi', taskNote: 'The code is with the security guard at the gate.'
+        },
+        {
+          id: 'v7', orderId: 7, name: 'Seminar Hall', locationLabel: 'Final Destination',
+          hintText: 'Your last target is where lecture echoes call; once inside the hall, the treasure reveals to all.',
+          venueImageUrl: 'https://images.pexels.com/photos/29704449/pexels-photo-29704449.jpeg',
+          correctCode: 'HAL07', coordinatorName: 'Shubhranshu', taskNote: 'Final stop! Enter the hall code to finish your journey.'
+        }
+      ];
+
+      const { error } = await supabase.from('venues').insert(defaults.map(mapVenueToDb));
+      if (error) throw error;
+
+      await fetchData();
+    } catch (error) {
+      console.error("Seed error:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [fetchData]);
+
   const value = useMemo(
     () => ({
       teams, venues, currentClue, loading, totalVenuesCount, getTeam, loginByLeaderPhone, loginByPhoneDirect,
       loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
       updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
-      deleteVenue, resetTeam, resetAllProgress,
+      deleteVenue, resetTeam, resetAllProgress, seedDefaultHunt
     }),
     [
       teams, venues, currentClue, loading, totalVenuesCount, getTeam, loginByLeaderPhone, loginByPhoneDirect,
       loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
       updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
-      deleteVenue, resetTeam, resetAllProgress
+      deleteVenue, resetTeam, resetAllProgress, seedDefaultHunt
     ]
   );
 

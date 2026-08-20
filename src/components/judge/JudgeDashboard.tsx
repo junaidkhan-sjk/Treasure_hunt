@@ -25,7 +25,8 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
     addVenue,
     deleteVenue,
     updateVenue,
-    setTeamLevel
+    setTeamLevel,
+    seedDefaultHunt
   } = useHunt();
   const [now, setNow] = useState(Date.now());
   const [sortKey, setSortKey] = useState<SortKey>("progress");
@@ -113,10 +114,11 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
           <button
             type="button"
             className="btn btn-secondary !min-h-[40px] !px-4 !py-2 text-[0.65rem] font-black uppercase tracking-widest border-white/5 hover:border-cyan/30"
-            onClick={() => {
+            onClick={async () => {
               const check = window.confirm("REPAIR DATABASE: This will re-sync all 7 stops with the correct secret codes. Proceed?");
               if (check) {
-                alert("Please copy and run the 'Final Fix' SQL I provided earlier in your Supabase SQL Editor to ensure the codes match.");
+                await seedDefaultHunt();
+                alert("Database repaired with default stops!");
               }
             }}
           >
@@ -279,6 +281,29 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
               />
             );
           })}
+        </div>
+      </section>
+
+      <section className="mt-20 mb-20">
+        <div className="glass-strong rounded-3xl p-8 border border-white/10 max-w-4xl mx-auto">
+          <div className="flex items-center gap-3 mb-6">
+            <span className="text-2xl">🛠️</span>
+            <h3 className="font-display text-xl font-black text-white uppercase">Developer Quick Start</h3>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-8">
+            <div className="space-y-3">
+              <p className="font-mono text-cyan text-[0.6rem] font-black uppercase">Step 01 :: Reset</p>
+              <p className="text-xs text-mute leading-relaxed">Click <span className="text-rose-400 font-bold">HARD RESET</span> to clear all existing test progress and start fresh.</p>
+            </div>
+            <div className="space-y-3">
+              <p className="font-mono text-cyan text-[0.6rem] font-black uppercase">Step 02 :: Seed</p>
+              <p className="text-xs text-mute leading-relaxed">Click <span className="text-white font-bold">REPAIR DB</span> to automatically load the 7 default campus stops.</p>
+            </div>
+            <div className="space-y-3">
+              <p className="font-mono text-cyan text-[0.6rem] font-black uppercase">Step 03 :: Teams</p>
+              <p className="text-xs text-mute leading-relaxed">Use <span className="text-white font-bold">ADD TEAM</span> to register player phone numbers for the hunt.</p>
+            </div>
+          </div>
         </div>
       </section>
     </div>

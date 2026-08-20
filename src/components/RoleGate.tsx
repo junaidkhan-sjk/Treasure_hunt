@@ -18,22 +18,22 @@ export function RoleGate({ onParticipant, onJudge }: RoleGateProps) {
             CAMPUS<span className="text-cyan">HUNT</span>
           </h1>
           <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan/70">
-            Freshers' Treasure Hunt 2026
+            Treasure Hunt Engine 2026
           </p>
         </div>
       </div>
 
       <div className="animate-rise stagger-1 mt-10">
         <div className="flex items-center gap-2 mb-4">
-          <div className="chip chip-live animate-pulse-glow">READY TO PLAY</div>
+          <div className="chip chip-live animate-pulse-glow">SYSTEM ONLINE</div>
           <div className="h-px flex-1 bg-gradient-to-r from-cyan/30 to-transparent" />
         </div>
         <h2 className="font-display text-[2.2rem] font-bold leading-[1.1] tracking-tight text-white sm:text-[2.8rem]">
-          Join the Hunt
+          Ready to Play?
         </h2>
         <p className="mt-4 max-w-md text-[0.95rem] leading-relaxed text-mute font-light">
-          Welcome Freshers! Solve the riddles, find the hidden spots on campus, and win the treasure.
-          Are you ready?
+          Welcome to the Hunt! Whether you are here to solve riddles or conduct your own event,
+          select your path below to begin.
         </p>
       </div>
 
@@ -51,8 +51,8 @@ export function RoleGate({ onParticipant, onJudge }: RoleGateProps) {
               <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-cyan/60">
                 PATH :: PLAYER
               </p>
-              <p className="font-display mt-1 text-2xl font-black text-white tracking-wide">
-                START PLAYING
+              <p className="font-display mt-1 text-2xl font-black text-white tracking-wide uppercase">
+                Join a Hunt
               </p>
             </div>
             <div className="flex flex-col items-end">
@@ -62,7 +62,7 @@ export function RoleGate({ onParticipant, onJudge }: RoleGateProps) {
           </div>
           <div className="mt-4 h-px w-full bg-white/5" />
           <p className="mt-4 text-xs leading-relaxed text-mute group-hover:text-text transition-colors">
-            Log in with your team number to see your first riddle and start the game.
+            Log in with your team number to see your riddles and start finding treasures.
           </p>
           <div className="mt-5 flex items-center justify-between">
             <span className="inline-flex items-center gap-2 font-mono text-[0.65rem] font-bold uppercase tracking-widest text-cyan group-hover:text-white transition-colors">
@@ -83,10 +83,10 @@ export function RoleGate({ onParticipant, onJudge }: RoleGateProps) {
           <div className="relative z-10 flex items-start justify-between gap-3">
             <div>
               <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-violet/60">
-                PATH :: ADMIN
+                PATH :: DEVELOPER
               </p>
-              <p className="font-display mt-1 text-2xl font-black text-white tracking-wide">
-                ORGANIZER
+              <p className="font-display mt-1 text-2xl font-black text-white tracking-wide uppercase">
+                Conduct a Hunt
               </p>
             </div>
             <div className="flex flex-col items-end">
@@ -96,11 +96,11 @@ export function RoleGate({ onParticipant, onJudge }: RoleGateProps) {
           </div>
           <div className="mt-4 h-px w-full bg-white/5" />
           <p className="mt-4 text-xs leading-relaxed text-mute group-hover:text-text transition-colors">
-            For organizers to see live scores and manage the treasure hunt stops.
+            Developer portal to create riddles, add teams, and monitor live progress.
           </p>
           <div className="mt-5 flex items-center justify-between">
             <span className="inline-flex items-center gap-2 font-mono text-[0.65rem] font-bold uppercase tracking-widest text-violet group-hover:text-white transition-colors">
-              [ ADMIN LOGIN ]
+              [ SETUP PORTAL ]
             </span>
             <div className="h-1.5 w-1.5 rounded-full bg-violet animate-pulse" />
           </div>

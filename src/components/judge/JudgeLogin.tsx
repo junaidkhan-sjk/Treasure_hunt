@@ -17,14 +17,14 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (!code.trim()) {
-      setError("Enter the Game Master access code.");
+      setError("Enter the developer access code.");
       setShaking(true);
       window.setTimeout(() => setShaking(false), 450);
       return;
     }
     if (!loginJudge(code)) {
       setCode("");
-      setError("Wrong access code.");
+      setError("Invalid access code.");
       setShaking(true);
       window.setTimeout(() => setShaking(false), 450);
       return;
@@ -46,17 +46,17 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
         </div>
         <div>
           <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-violet/70">
-            Admin Portal
+            Setup Mode
           </p>
           <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
-            Game Master Login
+            Developer Portal
           </h1>
         </div>
       </div>
 
       <p className="mt-6 text-sm leading-relaxed text-mute font-light">
-        Restricted access for event organizers only. Enter the master key
-        to view live progress and manage the hunt.
+        Access restricted to event organizers. Enter the master key
+        to configure teams, riddles, and monitor the live hunt.
       </p>
 
       <form
@@ -69,7 +69,7 @@ export function JudgeLogin({ onBack, onSuccess }: JudgeLoginProps) {
             htmlFor="judge-code"
             className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-3 block"
           >
-            MASTER KEY
+            DEVELOPER KEY
           </label>
           <div className="relative">
             <input
