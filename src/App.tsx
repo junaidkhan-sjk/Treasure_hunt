@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { HuntProvider, useHunt } from "./store/HuntStore";
 import { TechBackground } from "./components/TechBackground";
 import { RoleGate } from "./components/RoleGate";
@@ -25,7 +25,7 @@ export default function App() {
 }
 
 function AppShell() {
-  const { loading, activeEventId, setEvent } = useHunt();
+  const { loading, activeEventId, setEvent, user } = useHunt();
   const [screen, setScreen] = useState<AppScreen>({ name: "gatekeeper" });
   const [animKey, setAnimKey] = useState(0);
 
@@ -33,6 +33,13 @@ function AppShell() {
     setScreen(next);
     setAnimKey((k) => k + 1);
   };
+
+  // Persist screen state or handle redirect after Google Login
+  useEffect(() => {
+    if (user && screen.name === "judge-login") {
+       go({ name: "judge" });
+    }
+  }, [user, screen.name]);
 
   if (loading) {
     return (
@@ -85,12 +92,18 @@ function AppShell() {
           {screen.name === "judge-login" && (
             <JudgeLogin
               onBack={() => go({ name: "gate" })}
-              onSuccess={() => go({ name: "judge" })}
             />
           )}
 
-          {screen.name === "judge" && (
+          {screen.name === "judge" && user && (
             <JudgeDashboard onBack={() => { setEvent(""); go({ name: "gatekeeper" }); }} />
+          )}
+
+          {screen.name === "judge" && !user && (
+            <div className="flex min-h-dvh items-center justify-center">
+               <p className="text-rose">Authentication required. Redirecting...</p>
+               {setTimeout(() => go({ name: "judge-login" }), 1500) && null}
+            </div>
           )}
         </div>
       </div>
@@ -130,7 +143,7 @@ function EventGate({ onSelect }: { onSelect: (id: string) => void }) {
               <div className="text-[0.6rem] text-cyan/60 font-mono text-left space-y-2">
                  <p>» Pick any unique name for your event.</p>
                  <p>» Share that name with your players.</p>
-                 <p>» Use Master Key '0786' to manage it.</p>
+                 <p>» Use Google Login to manage your event.</p>
               </div>
            </div>
         </div>

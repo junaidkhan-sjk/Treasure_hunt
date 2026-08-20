@@ -10,7 +10,6 @@ import {
 import { supabase } from "../lib/supabase";
 import {
   codesMatch,
-  judgeCodeMatch,
   phonesMatch,
   mapDbTeam,
   mapTeamToDb,
@@ -19,6 +18,7 @@ import {
   type Team,
   type Venue,
 } from "../data/schema";
+import type { User } from "@supabase/supabase-js";
 
 export type VerifyResult =
   | { ok: true; finished: boolean; nextLevel: number }
@@ -35,11 +35,13 @@ interface HuntContextValue {
   loading: boolean;
   activeEventId: string | null;
   totalVenuesCount: number;
+  user: User | null; // Google Auth User
   setEvent: (eventId: string) => void;
   getTeam: (teamId: string) => Team | undefined;
   loginByLeaderPhone: (phone: string) => Team | null;
   loginByPhoneDirect: (phone: string) => Promise<Team | null>;
-  loginJudge: (accessCode: string) => boolean;
+  loginJudgeWithGoogle: () => Promise<void>;
+  logout: () => Promise<void>;
   ensureStarted: (teamId: string) => void;
   checkClueCode: (teamId: string, code: string) => Promise<CodeCheckResult>;
   confirmAndAdvance: (teamId: string) => VerifyResult;
@@ -65,8 +67,35 @@ export function HuntProvider({ children }: { children: ReactNode }) {
   const [currentClue, setCurrentClue] = useState<Venue | null>(null);
   const [totalVenuesCount, setTotalVenuesCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-  // Set Event and Start Fetching
+  // Auth State Listener
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const loginJudgeWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+    setUser(null);
+  };
+
   const setEvent = (eventId: string) => {
     const normalized = eventId.trim().toUpperCase();
     setActiveEventId(normalized);
@@ -88,14 +117,11 @@ export function HuntProvider({ children }: { children: ReactNode }) {
         .eq('event_id', activeEventId)
         .order('order_id', { ascending: true });
 
-      if (tErr) console.error("Teams fetch error:", tErr);
-      if (vErr) console.error("Venues fetch error:", vErr);
-
       if (teamsData) setTeams(teamsData.map(mapDbTeam));
       if (venuesData) setVenues(venuesData.map(mapDbVenue));
       if (count !== null) setTotalVenuesCount(count);
     } catch (error) {
-      console.error("Supabase fetch error:", error);
+      console.error("Fetch error:", error);
     } finally {
       setLoading(false);
     }
@@ -105,52 +131,26 @@ export function HuntProvider({ children }: { children: ReactNode }) {
     fetchData();
   }, [fetchData]);
 
-  // Real-time Subscriptions
   useEffect(() => {
     if (!activeEventId) return;
-
     const channel = supabase
       .channel(`event-${activeEventId}`)
-      .on('postgres_changes', {
-          event: '*',
-          table: 'teams',
-          filter: `event_id=eq.${activeEventId}`
-      }, (payload) => {
-          if (payload.eventType === 'INSERT') {
-              setTeams(prev => [...prev, mapDbTeam(payload.new)]);
-          } else if (payload.eventType === 'UPDATE') {
-              setTeams(prev => prev.map(t => t.teamId === payload.new.team_id ? mapDbTeam(payload.new) : t));
-          } else if (payload.eventType === 'DELETE') {
-              setTeams(prev => prev.filter(t => t.teamId !== payload.old.team_id));
-          }
-      })
-      .on('postgres_changes', {
-          event: '*',
-          table: 'venues',
-          filter: `event_id=eq.${activeEventId}`
-      }, () => fetchData())
+      .on('postgres_changes', { event: '*', table: 'teams', filter: `event_id=eq.${activeEventId}` }, () => fetchData())
+      .on('postgres_changes', { event: '*', table: 'venues', filter: `event_id=eq.${activeEventId}` }, () => fetchData())
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [activeEventId, fetchData]);
 
   const refreshCurrentClue = useCallback(async (levelIndex: number) => {
     if (!activeEventId) return;
-    const { data, error } = await supabase
+    const { data } = await supabase
       .from('venues')
       .select('*')
       .eq('event_id', activeEventId)
       .eq('order_id', levelIndex + 1)
       .maybeSingle();
-
     if (data) setCurrentClue(mapDbVenue(data));
   }, [activeEventId]);
-
-  const loginJudge = useCallback((accessCode: string) => {
-    return judgeCodeMatch(accessCode);
-  }, []);
 
   const getTeam = useCallback(
     (teamId: string) => teams.find((t) => t.teamId.toUpperCase() === teamId.trim().toUpperCase()),
@@ -185,10 +185,9 @@ export function HuntProvider({ children }: { children: ReactNode }) {
   const checkClueCode = useCallback(
     async (teamId: string, code: string): Promise<CodeCheckResult> => {
       if (currentClue) {
-        const isMatch = codesMatch(code, currentClue.correctCode);
-        if (isMatch) return { ok: true };
+        if (codesMatch(code, currentClue.correctCode)) return { ok: true };
       }
-      return { ok: false, message: "Invalid code. Check your clue and try again." };
+      return { ok: false, message: "Invalid code. Try again." };
     },
     [currentClue]
   );
@@ -197,47 +196,32 @@ export function HuntProvider({ children }: { children: ReactNode }) {
     (teamId: string): VerifyResult => {
       const team = teams.find((t) => t.teamId === teamId);
       if (!team || !activeEventId) return { ok: false, message: "Team not found." };
-
       const nextLevel = team.currentLevelIndex + 1;
       const finished = nextLevel >= totalVenuesCount;
       const now = Date.now();
-
       supabase.from('teams').update({
         current_level_index: nextLevel,
         last_completion_at: now,
         started_at: team.startedAt ?? now,
         finished_at: finished ? now : null,
-      }).eq('team_id', teamId).eq('event_id', activeEventId).then(({error}) => {
-        if (error) console.error("Advancement error:", error);
-      });
-
+      }).eq('team_id', teamId).eq('event_id', activeEventId).then();
       return { ok: true, finished, nextLevel };
     },
     [teams, totalVenuesCount, activeEventId]
   );
 
-  // Admin Ops
   const updateTeamDetails = useCallback(async (teamId: string, teamName: string, leaderName: string, leaderPhone: string, members: string[]) => {
     if (!activeEventId) return;
     setTeams(prev => prev.map(t => t.teamId === teamId ? { ...t, teamName, leaderName, leaderPhone, members } : t));
-    await supabase.from('teams').update({
-      team_name: teamName,
-      leader_name: leaderName,
-      leader_phone: leaderPhone,
-      members: members
-    }).eq('team_id', teamId).eq('event_id', activeEventId);
+    await supabase.from('teams').update({ team_name: teamName, leader_name: leaderName, leader_phone: leaderPhone, members: members }).eq('team_id', teamId).eq('event_id', activeEventId);
   }, [activeEventId]);
 
   const addTeam = useCallback(async (team: Team) => {
     if (!activeEventId) return;
     const teamWithEvent = { ...team, eventId: activeEventId };
     setTeams(prev => [...prev, teamWithEvent]);
-    const { error } = await supabase.from('teams').insert([mapTeamToDb(teamWithEvent)]);
-    if (error) {
-        console.error("Add team error:", error);
-        fetchData();
-    }
-  }, [activeEventId, fetchData]);
+    await supabase.from('teams').insert([mapTeamToDb(teamWithEvent)]);
+  }, [activeEventId]);
 
   const deleteTeam = useCallback(async (teamId: string) => {
     if (!activeEventId) return;
@@ -253,8 +237,7 @@ export function HuntProvider({ children }: { children: ReactNode }) {
 
   const addVenue = useCallback(async (venue: Venue) => {
     if (!activeEventId) return;
-    const venueWithEvent = { ...venue, eventId: activeEventId };
-    await supabase.from('venues').insert([mapVenueToDb(venueWithEvent)]);
+    await supabase.from('venues').insert([mapVenueToDb({ ...venue, eventId: activeEventId })]);
     fetchData();
   }, [activeEventId, fetchData]);
 
@@ -343,15 +326,16 @@ export function HuntProvider({ children }: { children: ReactNode }) {
   const value = useMemo(
     () => ({
       teams, venues, currentClue, loading, totalVenuesCount, activeEventId, setEvent,
+      user, loginJudgeWithGoogle, logout,
       getTeam, loginByLeaderPhone, loginByPhoneDirect,
-      loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
+      ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
       updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
       deleteVenue, resetTeam, resetAllProgress, seedDefaultHunt
     }),
     [
       teams, venues, currentClue, loading, totalVenuesCount, activeEventId, setEvent,
-      getTeam, loginByLeaderPhone, loginByPhoneDirect,
-      loginJudge, ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
+      user, getTeam, loginByLeaderPhone, loginByPhoneDirect,
+      ensureStarted, checkClueCode, confirmAndAdvance, refreshCurrentClue,
       updateTeamDetails, addTeam, deleteTeam, setTeamLevel, addVenue, updateVenue,
       deleteVenue, resetTeam, resetAllProgress, seedDefaultHunt
     ]

@@ -26,7 +26,9 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
     deleteVenue,
     updateVenue,
     setTeamLevel,
-    seedDefaultHunt
+    seedDefaultHunt,
+    user,
+    logout
   } = useHunt();
   const [now, setNow] = useState(Date.now());
   const [sortKey, setSortKey] = useState<SortKey>("progress");
@@ -40,6 +42,11 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    onBack();
+  };
 
   const stats = useMemo(() => {
     const finishedCount = teams.filter(
@@ -150,6 +157,13 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
           <div className="w-px h-8 bg-white/5 mx-2" />
           <button
             type="button"
+            className="btn btn-ghost !min-h-[40px] !px-4 !py-2 text-[0.65rem] font-black uppercase tracking-widest border-white/5 hover:border-rose-500/50 hover:text-rose-500"
+            onClick={handleLogout}
+          >
+            LOGOUT
+          </button>
+          <button
+            type="button"
             className="btn btn-ghost !min-h-[40px] !px-4 !py-2 text-[0.65rem] font-black uppercase tracking-widest"
             onClick={onBack}
           >
@@ -157,6 +171,15 @@ export function JudgeDashboard({ onBack }: JudgeDashboardProps) {
           </button>
         </div>
       </header>
+
+      {user && (
+        <div className="mt-8 mb-8 flex items-center gap-3 px-4 py-2 rounded-xl bg-white/5 border border-white/5 self-start w-fit">
+           <img src={user.user_metadata.avatar_url} alt="" className="w-6 h-6 rounded-full border border-cyan/30" />
+           <p className="font-mono text-[0.6rem] text-mute uppercase tracking-widest">
+              Authenticated :: <span className="text-cyan">{user.email}</span>
+           </p>
+        </div>
+      )}
 
       <section className="mt-12 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard label="TOTAL TEAMS" value={padStop(teams.length)} delay="stagger-1" />
@@ -379,7 +402,7 @@ function AddTeamRow({ onCancel, onAdd }: { onCancel: () => void, onAdd: (team: T
           <button className="btn btn-primary !min-h-[34px] !text-[0.65rem] font-black uppercase" onClick={() => onAdd({
             teamId, teamName, leaderName, leaderPhone,
             members: members.split(',').map(m => m.trim()).filter(m => m !== ""),
-            currentLevelIndex: 0, lastCompletionAt: null, startedAt: null, finishedAt: null
+            currentLevelIndex: 0, lastCompletionAt: null, startedAt: null, finishedAt: null, eventId: ""
           })}>SAVE TEAM</button>
           <button className="btn btn-ghost !min-h-[34px] !text-[0.65rem] font-black uppercase" onClick={onCancel}>CANCEL</button>
         </div>
@@ -403,7 +426,7 @@ function AddVenueCard({ orderId, onCancel, onAdd }: { orderId: number, onCancel:
       </div>
       <div className="mt-8 flex gap-4">
         <button className="btn btn-primary !min-h-[40px] !py-2 text-[0.7rem] font-black uppercase flex-1 tracking-widest" onClick={() => onAdd({
-          id: `v-${Date.now()}`, orderId, name, locationLabel: "TBD", hintText: hint, venueImageUrl: "", correctCode: code, coordinatorName: "TBD", taskNote: "TBD"
+          id: `v-${Date.now()}`, orderId, name, locationLabel: "TBD", hintText: hint, venueImageUrl: "", correctCode: code, coordinatorName: "TBD", taskNote: "TBD", eventId: ""
         })}>CREATE</button>
         <button className="btn btn-ghost !min-h-[40px] !py-2 text-[0.7rem] font-black uppercase flex-1 tracking-widest" onClick={onCancel}>CANCEL</button>
       </div>
@@ -444,7 +467,7 @@ function VenueCard({ venue, teamsCount, huntingCount, clearedCount, delay, onUpd
         </div>
       ) : (
         <>
-          <p className="font-display mt-2 text-base font-black text-white uppercase tracking-tight truncate">{venue.name}</p>
+          <p className="font-display mt-2 text-base font-black text-white uppercase tracking-tight leading-none truncate">{venue.name}</p>
           <p className="mt-4 text-[0.7rem] text-mute/80 font-mono leading-relaxed line-clamp-3 italic">"{venue.hintText}"</p>
           <div className="mt-8 space-y-4">
             <div className="flex justify-between items-end">
@@ -555,7 +578,7 @@ function TeamRow({
           <p className="text-[0.75rem] font-bold text-white uppercase tracking-tight truncate">{done ? "COMPLETED!" : venue?.name || "---"}</p>
           {!done && venue && (
             <p className="font-mono mt-1 text-[0.55rem] font-bold text-mute uppercase tracking-tighter">
-               {venue.locationLabel}
+               NODE #{padStop(venue.orderId)}
             </p>
           )}
         </div>
