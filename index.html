@@ -3,30 +3,11 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#05070f" />
+    <meta name="theme-color" content="#e0e5ec" />
     <title>Campus Hunt 2026 — Freshers' Treasure Hunt Adventure</title>
     <meta name="description" content="Join the ultimate campus treasure hunt! Solve riddles, find hidden spots, and compete with your team in the Campus Hunt 2026 adventure." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="canonical" href="https://treasure-hunt-freshers.vercel.app/" />
-
-    <!-- Open Graph / Social Media -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://treasure-hunt-freshers.vercel.app/" />
-    <meta property="og:title" content="Campus Hunt 2026 — Treasure Hunt Adventure" />
-    <meta property="og:description" content="Solve riddles and find hidden spots on campus. Join the hunt now!" />
-    <meta property="og:image" content="https://treasure-hunt-freshers.vercel.app/og-image.jpg" />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content="https://treasure-hunt-freshers.vercel.app/" />
-    <meta property="twitter:title" content="Campus Hunt 2026 — Treasure Hunt Adventure" />
-    <meta property="twitter:description" content="Solve riddles and find hidden spots on campus. Join the hunt now!" />
-
-    <!-- Speed Optimization: Preconnect to external domains -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="https://images.pexels.com" />
 
     <!-- Speed Optimization: Async Font Loading -->
     <link
@@ -39,20 +20,19 @@
       <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
     </noscript>
 
-    <!-- Critical CSS for instant HUD display -->
+    <!-- Critical CSS for Neomorphic HUD -->
     <style>
       :root {
-        --color-void: #05070f;
-        --color-text: #e2e8f0;
-        --color-cyan: #22d3ee;
+        --color-bg-neo: #e0e5ec;
+        --color-text: #444444;
       }
       body {
-        background: var(--color-void);
+        background: var(--color-bg-neo);
         color: var(--color-text);
         margin: 0;
         font-family: system-ui, -apple-system, sans-serif;
       }
-      .tech-bg { position: fixed; inset: 0; z-index: 0; background: #05070f; }
+      .tech-bg { position: fixed; inset: 0; z-index: 0; background: #e0e5ec; }
       #root { min-height: 100dvh; position: relative; z-index: 1; }
     </style>
   </head>
