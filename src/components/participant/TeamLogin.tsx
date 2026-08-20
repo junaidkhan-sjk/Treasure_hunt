@@ -48,39 +48,39 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
   };
 
   return (
-    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-6 sm:px-6 sm:py-10 text-slate-700 font-body">
-      <button type="button" className="neo-btn px-4 py-2 rounded-full !text-[0.65rem] font-bold uppercase tracking-widest text-slate-400 hover:text-cyan-600 transition-colors" onClick={onBack}>
+    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-6 sm:px-6 sm:py-10 text-text font-body">
+      <button type="button" className="btn-link !text-[0.65rem] font-bold uppercase tracking-widest text-cyan/50 hover:text-cyan" onClick={onBack}>
         {"<< GO BACK"}
       </button>
 
-      <div className="mt-10 flex items-center gap-4">
+      <div className="mt-8 flex items-center gap-3 text-text">
         <div className="relative">
           <BrandMark size="sm" className="animate-float" />
-          <div className="absolute -inset-1 rounded-full shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.1)]" />
+          <div className="absolute -inset-1 bg-cyan/20 blur-sm rounded-full" />
         </div>
         <div>
-          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-slate-400">
+          <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan/70">
             Player Login
           </p>
-          <h1 className="font-display text-2xl font-black text-slate-800 uppercase tracking-tight">
+          <h1 className="font-display text-2xl font-black text-white uppercase tracking-tight">
             Team Login
           </h1>
         </div>
       </div>
 
-      <p className="mt-6 text-sm leading-relaxed text-slate-500 font-light">
+      <p className="mt-6 text-sm leading-relaxed text-mute font-light">
         Enter your registered phone number to start the hunt.
       </p>
 
       <form
-        className="neo-flat mt-10 space-y-8 rounded-3xl p-8"
+        className="glass-strong mt-10 space-y-6 rounded-2xl p-8 border-t-2 border-t-cyan/30"
         onSubmit={handleSubmit}
         noValidate
       >
         <div className={shaking ? "animate-shake" : ""}>
           <label
             htmlFor="leader-phone"
-            className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-slate-400 mb-4 block text-center"
+            className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.2em] text-mute mb-2 block"
           >
             Your Phone Number
           </label>
@@ -90,7 +90,9 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
               type="tel"
               inputMode="numeric"
               autoComplete="tel"
-              className="neo-input w-full rounded-2xl font-mono tracking-[0.3em] !text-center !text-xl !py-5 focus:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,1)] outline-none transition-all"
+              className={`field-input font-mono tracking-[0.3em] !text-center !text-xl !py-4 !bg-black/40 !border-white/10 focus:!border-cyan/50 ${
+                error ? "error" : ""
+              }`}
               placeholder="0000000000"
               value={phone}
               onChange={(e) => {
@@ -102,17 +104,17 @@ export function TeamLogin({ onBack, onSuccess }: TeamLoginProps) {
               aria-describedby={error ? "phone-error" : "phone-help"}
             />
           </div>
-          <p id="phone-help" className="mt-4 text-[0.6rem] text-slate-400 font-mono uppercase tracking-tighter text-center italic">
-            * 10-digit number used during registration
+          <p id="phone-help" className="mt-3 text-[0.65rem] text-mute/60 font-mono uppercase tracking-tighter text-center italic">
+            * Use your 10-digit registered number.
           </p>
           {error && (
-            <p id="phone-error" className="mt-4 text-xs text-rose-500 font-mono uppercase tracking-tighter text-center font-bold" role="alert">
+            <p id="phone-error" className="mt-4 text-xs text-rose font-mono uppercase tracking-tighter text-center font-bold" role="alert">
               {error}
             </p>
           )}
         </div>
 
-        <button type="submit" disabled={isLoggingIn} className="neo-btn w-full !py-5 rounded-2xl font-black tracking-widest uppercase disabled:opacity-50 hover:text-cyan-600">
+        <button type="submit" disabled={isLoggingIn} className="btn btn-primary w-full !py-4 font-black tracking-widest uppercase disabled:opacity-50">
           {isLoggingIn ? "VERIFYING..." : "START THE HUNT"}
         </button>
       </form>

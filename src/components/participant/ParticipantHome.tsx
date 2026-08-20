@@ -152,47 +152,48 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
   if (finished) {
     return (
-      <div className="animate-fade-in mx-auto flex w-full max-w-lg flex-col items-center px-4 py-10 text-center sm:px-6 font-body text-slate-700">
-        <div className="flex w-full items-center justify-between border-b border-slate-200 pb-5 mb-10">
+      <div className="animate-fade-in mx-auto flex w-full max-w-lg flex-col items-center px-4 py-10 text-center sm:px-6 font-body text-text">
+        <div className="flex w-full items-center justify-between border-b border-white/5 pb-5 mb-10">
           <BrandMark size="sm" />
-          <button type="button" className="neo-btn px-4 py-2 rounded-full !text-[0.6rem] uppercase tracking-widest text-rose-500" onClick={onLogout}>
+          <button type="button" className="btn-link !text-[0.6rem] uppercase tracking-widest text-rose" onClick={onLogout}>
             [ LOG OUT ]
           </button>
         </div>
 
         <div
-          className="animate-seal relative mt-12 flex h-40 w-40 items-center justify-center rounded-full neo-convex"
+          className="animate-seal relative mt-12 flex h-32 w-32 items-center justify-center rounded-full glass"
           aria-hidden="true"
         >
-          <div className="relative flex h-full w-full flex-col items-center justify-center rounded-full">
-            <span className="font-mono text-[0.7rem] font-bold uppercase tracking-[0.2em] text-cyan-600">
+          <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan/40 via-violet/30 to-magenta/40 blur-xl opacity-50" />
+          <div className="relative flex h-full w-full flex-col items-center justify-center rounded-full border border-cyan/40">
+            <span className="font-mono text-[0.62rem] font-bold uppercase tracking-[0.2em] text-cyan">
               QUEST
             </span>
-            <span className="font-display mt-1 text-2xl font-black text-slate-800">
-              COMPLETE
+            <span className="font-display mt-1 text-lg font-bold text-white">
+              DONE!
             </span>
           </div>
         </div>
 
-        <h2 className="font-display mt-12 text-[2.2rem] font-black leading-tight text-slate-800 sm:text-[2.8rem] uppercase">
-          GREAT JOB, <br/><span className="text-cyan-600">{team.teamName.toUpperCase()}</span>!
+        <h2 className="font-display mt-12 text-[2rem] font-bold leading-tight text-white sm:text-[2.5rem] uppercase">
+          GREAT JOB, <br/><span className="text-gradient">{team.teamName.toUpperCase()}</span>!
         </h2>
-        <p className="mt-4 text-slate-400 font-mono text-sm uppercase tracking-widest font-bold">Mission Accomplished</p>
+        <p className="mt-4 text-mute font-mono text-sm uppercase tracking-widest">You found all the spots!</p>
 
-        <div className="mt-12 grid w-full max-w-sm grid-cols-2 gap-6">
-          <div className="neo-flat rounded-3xl px-4 py-6">
-            <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-slate-400 font-bold">
-              Final Time
+        <div className="mt-12 grid w-full max-w-sm grid-cols-2 gap-4">
+          <div className="glass rounded-2xl px-3 py-6">
+            <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-mute">
+              Your Time
             </p>
-            <p className="font-mono mt-2 text-2xl font-black tabular-nums text-cyan-600">
+            <p className="font-mono mt-2 text-2xl font-semibold tabular-nums text-cyan">
               {formatElapsed(elapsedMs)}
             </p>
           </div>
-          <div className="neo-flat rounded-3xl px-4 py-6">
-            <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-slate-400 font-bold">
-              Nodes Secured
+          <div className="glass rounded-2xl px-3 py-6">
+            <p className="font-mono text-[0.6rem] uppercase tracking-[0.14em] text-mute">
+              Stops Found
             </p>
-            <p className="font-mono mt-2 text-2xl font-black tabular-nums text-indigo-500">
+            <p className="font-mono mt-2 text-2xl font-semibold tabular-nums text-violet">
               {totalVenuesCount}/{totalVenuesCount}
             </p>
           </div>
@@ -203,103 +204,113 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
   if (!venue) {
     return (
-      <div className="flex min-h-dvh items-center justify-center bg-slate-100 text-slate-700">
+      <div className="flex min-h-dvh items-center justify-center bg-void text-text">
         <div className="text-center">
-          <div className="mb-6 h-12 w-12 animate-spin rounded-full border-4 border-cyan-400 border-t-transparent mx-auto" />
-          <p className="font-mono text-[0.65rem] text-slate-400 animate-pulse uppercase tracking-[0.3em] font-black">Syncing Node Data...</p>
+          <div className="mb-6 h-12 w-12 animate-spin rounded-full border-2 border-cyan border-t-transparent mx-auto" />
+          <p className="font-mono text-[0.65rem] text-cyan animate-pulse uppercase tracking-[0.3em] font-bold italic">Preparing your next clue...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7 font-body text-slate-700">
-      <header className="flex items-start justify-between gap-3 border-b border-slate-300 pb-5 mb-8">
+    <div className="animate-fade-in mx-auto w-full max-w-lg px-4 py-5 sm:px-6 sm:py-7 font-body text-text">
+      <header className="flex items-start justify-between gap-3 border-b border-white/5 pb-5 mb-8">
         <div className="flex min-w-0 items-center gap-3">
           <div className="relative">
             <BrandMark size="sm" className="animate-float" />
-            <div className="absolute -inset-1 rounded-full shadow-[inset_1px_1px_2px_rgba(255,255,255,0.8),inset_-1px_-1px_2px_rgba(0,0,0,0.1)]" />
+            <div className="absolute -inset-1 bg-cyan/10 blur-sm rounded-full" />
           </div>
           <div className="min-w-0">
-            <h1 className="truncate font-display text-lg font-bold leading-tight text-slate-800 tracking-tight">
+            <h1 className="truncate font-display text-lg font-bold leading-tight text-white tracking-tight">
               {team.teamName.toUpperCase()}
             </h1>
-            <div className="flex flex-col gap-0.5 mt-1">
+            <div className="flex flex-col gap-1 mt-1.5">
               <div className="flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-[0_0_5px_rgba(34,211,238,0.5)]" />
-                <p className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-cyan-700">
+                <span className="h-1 w-1 rounded-full bg-cyan animate-pulse" />
+                <p className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-cyan/70">
                   LEADER :: {team.leaderName.toUpperCase()}
                 </p>
               </div>
-              <p className="font-mono text-[0.5rem] uppercase tracking-widest text-slate-400">
-                TEAM_ID :: {team.teamId}
-              </p>
+              {team.members.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap">
+                   <p className="font-mono text-[0.45rem] uppercase tracking-tighter text-mute/40">CREW ::</p>
+                   {team.members.slice(0, 3).map((m, i) => (
+                     <span key={i} className="font-mono text-[0.5rem] uppercase tracking-tight text-mute/60">
+                        {m.split(' ')[0]}
+                        {i < Math.min(team.members.length, 3) - 1 && <span className="mx-1 opacity-30">•</span>}
+                     </span>
+                   ))}
+                   {team.members.length > 3 && <span className="text-[0.45rem] font-mono text-cyan/40">+{team.members.length - 3}</span>}
+                </div>
+              )}
             </div>
           </div>
         </div>
         <div className="flex flex-col items-end gap-3">
-          <div className="neo-concave px-3 py-1 rounded-lg font-mono text-[0.75rem] tabular-nums text-slate-600">
+          <div className="rounded-lg border border-cyan/20 bg-cyan/5 px-3 py-1 font-mono text-[0.75rem] tabular-nums text-cyan">
             {formatElapsed(elapsedMs)}
           </div>
-          <button type="button" className="neo-btn px-3 py-1 rounded-md !text-[0.55rem] hover:text-rose-500 transition-colors uppercase tracking-widest" onClick={onLogout}>
+          <button type="button" className="btn-link !text-[0.6rem] hover:!text-rose transition-colors uppercase tracking-widest" onClick={onLogout}>
             [ EXIT ]
           </button>
         </div>
       </header>
 
-      {/* Message Box */}
-      <div className="mt-6 neo-concave rounded-2xl p-4 font-mono text-[0.6rem] mb-8">
-        <div className="flex items-center gap-2 mb-3 border-b border-slate-200 pb-2">
-           <span className="text-cyan-600 font-bold">»</span>
-          <span className="text-slate-400 uppercase tracking-widest font-black">QUEST_UPDATES</span>
+      {/* Game Updates */}
+      <div className="mt-6 glass-strong rounded-xl p-4 font-mono text-[0.65rem] bg-black/40 border border-white/5 mb-8">
+        <div className="flex items-center gap-2 mb-3 border-b border-white/5 pb-2">
+          <span className="text-cyan font-bold">»</span>
+          <span className="text-mute uppercase tracking-widest font-black">GAME_UPDATES</span>
         </div>
         <div className="space-y-1.5">
           {logs.map((log, i) => (
-            <div key={i} className={`${log.includes('Wrong') || log.includes('lost') ? 'text-rose-500' : log.includes('Correct') || log.includes('Stop cleared') ? 'text-emerald-600' : 'text-slate-500'}`}>
+            <div key={i} className={`${log.includes('Wrong') || log.includes('lost') ? 'text-rose' : log.includes('Correct') || log.includes('Stop cleared') ? 'text-lime' : 'text-cyan/60'}`}>
               {log}
             </div>
           ))}
           <div className="flex items-center gap-1 mt-1">
-            <span className="text-cyan-500 animate-pulse">{">"}</span>
-            <span className="h-3 w-1.5 bg-cyan-200 animate-blink" />
+            <span className="text-cyan animate-pulse">{">"}</span>
+            <span className="h-3 w-1.5 bg-cyan/40 animate-blink" />
           </div>
         </div>
       </div>
 
       {/* Progress Map */}
-      <section className="neo-convex mt-6 relative overflow-hidden rounded-3xl p-6 mb-8 border-l-4 border-l-cyan-400">
+      <section className="glass mt-6 relative overflow-hidden rounded-2xl p-6 border-l-4 border-l-cyan bg-black/20 mb-8">
+        <div className="scanning-line opacity-5" />
         <div className="flex items-center justify-between gap-2 mb-6">
-          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-slate-400">
+          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-cyan/80">
             PROGRESS_MAP
           </p>
-          <div className="neo-concave px-3 py-1 rounded-full">
-             <span className="font-mono text-[0.7rem] font-bold text-cyan-700 uppercase tracking-tighter">STOP {clueNumber} / {totalVenuesCount}</span>
+          <div className="px-2 py-0.5 rounded bg-cyan/10 border border-cyan/20">
+             <span className="font-mono text-[0.7rem] font-bold text-cyan uppercase">STOP {clueNumber} / {totalVenuesCount}</span>
           </div>
         </div>
 
         <div className="flex items-center justify-between gap-1 relative px-1">
-           <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-200 -translate-y-1/2" />
+           <div className="absolute top-1/2 left-0 w-full h-px bg-white/5 -translate-y-1/2" />
            {[...Array(totalVenuesCount)].map((_, i) => (
             <div key={i} className="relative z-10 flex flex-col items-center gap-3">
                <div
-                  className={`h-4 w-4 rounded-full transition-all duration-700 ${
-                    i < cleared ? 'bg-cyan-500 shadow-[2px_2px_4px_rgba(0,0,0,0.1)]' :
-                    i === cleared ? 'bg-white border-2 border-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.4)] scale-125' : 'bg-slate-200'
+                  className={`h-3 w-3 rounded-full border transition-all duration-700 ${
+                    i < cleared ? 'bg-cyan border-cyan shadow-[0_0_10px_rgba(34,211,238,0.5)]' :
+                    i === cleared ? 'bg-black border-cyan animate-pulse scale-125 shadow-[0_0_15px_rgba(34,211,238,0.4)]' : 'bg-black border-white/10'
                   }`}
                 />
-                <span className={`font-mono text-[0.5rem] font-black ${i === cleared ? 'text-cyan-600' : 'text-slate-300'}`}>
+                <span className={`font-mono text-[0.5rem] ${i === cleared ? 'text-cyan font-black' : 'text-mute/30'}`}>
                   {i+1}
                 </span>
             </div>
           ))}
         </div>
 
-        <div className="flex justify-between items-center mt-6 pt-5 border-t border-slate-200">
-          <p className="font-mono text-[0.55rem] text-slate-400 uppercase tracking-widest font-bold">
+        <div className="flex justify-between items-center mt-6 pt-5 border-t border-white/5">
+          <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest">
             {cleared} Found // {totalVenuesCount - cleared} Left
           </p>
-          <span className="font-mono text-[0.6rem] text-cyan-600 font-black italic">
-            {Math.round(progressPct)}% COMPLETE
+          <span className="font-mono text-[0.6rem] text-cyan font-black italic">
+            {Math.round(progressPct)}% DONE
           </span>
         </div>
       </section>
@@ -307,45 +318,46 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
       {/* Current Riddle */}
       {phase === "hint" && (
         <section className="animate-fade-scale mt-8">
-          <div className="flex items-center gap-3 mb-3">
-             <div className="h-1 w-10 bg-cyan-300 rounded-full" />
-             <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-cyan-600">ACTIVE_RIDDLE</p>
+          <div className="flex items-center gap-2 mb-3">
+             <div className="h-1 w-8 bg-cyan/40 rounded-full" />
+             <p className="font-mono text-[0.6rem] font-bold uppercase tracking-[0.3em] text-cyan">YOUR_CLUE</p>
           </div>
-          <h2 className="font-display text-2xl font-black leading-tight text-slate-800 tracking-tight uppercase mb-6">
+          <h2 className="font-display text-2xl font-black leading-tight text-white tracking-tight uppercase mb-6">
             Solve the Riddle
           </h2>
 
-          <div className="neo-convex rounded-3xl p-8 relative overflow-hidden border-t-4 border-t-cyan-400 mb-10">
+          <div className="glass-strong glow-border mt-6 rounded-2xl p-8 relative overflow-hidden border-t-2 border-t-cyan/30 mb-10">
             <div className="absolute top-0 right-0 p-6 opacity-5 pointer-events-none text-6xl">
                ?
             </div>
             <div className="mb-6 flex items-center gap-3">
-              <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse" />
-              <span className="font-mono text-[0.55rem] font-black uppercase tracking-[0.2em] text-slate-400">
-                MYSTERY_NODE :: #{padStop(clueNumber)}
+              <span className="h-1.5 w-1.5 rounded-full bg-lime shadow-[0_0_8px_rgba(52,211,153,0.4)] animate-pulse" />
+              <span className="font-mono text-[0.55rem] font-black uppercase tracking-[0.2em] text-mute">
+                MYSTERY_STOP_#{padStop(clueNumber)}
               </span>
             </div>
-            <blockquote className="font-display text-[1.4rem] font-bold leading-relaxed text-slate-700 italic">
+            <blockquote className="font-display text-[1.3rem] font-bold leading-relaxed text-slate-100 italic">
               "{venue.hintText}"
             </blockquote>
-            <div className="mt-10 pt-8 border-t border-slate-200 space-y-6">
+            <div className="mt-10 pt-8 border-t border-white/5 space-y-6">
                <div className="flex items-start gap-4">
-                  <div className="neo-btn h-6 w-6 rounded-md flex items-center justify-center text-[0.6rem] font-black">!</div>
-                  <p className="text-[0.7rem] leading-relaxed text-slate-500 uppercase font-mono tracking-tighter font-bold">
-                    TIP: {venue.taskNote}
+                  <span className="font-mono text-cyan text-[0.7rem] font-black">[!]</span>
+                  <p className="text-[0.7rem] leading-relaxed text-mute uppercase font-mono tracking-tighter font-bold">
+                    Tip: {venue.taskNote}
                   </p>
                </div>
-              <div className="neo-concave rounded-2xl p-6 flex items-start gap-4">
-                <span className="text-xl">💡</span>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Found the spot? Check the back of your physical clue card for the secret code and enter it below.
+              <div className="rounded-xl border border-cyan/10 bg-white/[0.02] p-5 flex items-start gap-4">
+                <span className="text-cyan text-sm">✦</span>
+                <p className="text-xs text-slate-400 leading-relaxed font-light">
+                  Find this spot on campus. Once there, find the secret code
+                  on the back of your card and enter it below.
                 </p>
               </div>
             </div>
           </div>
 
           <form
-            className={`neo-flat mt-10 space-y-8 rounded-3xl p-8 border-b-4 border-b-cyan-400 ${
+            className={`glass mt-8 space-y-8 rounded-2xl p-8 border-b-2 border-b-cyan/20 ${
               shaking ? "animate-shake" : ""
             }`}
             onSubmit={handleCodeCheck}
@@ -353,9 +365,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             <div className="text-center">
               <label
                 htmlFor="clue-code"
-                className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 block"
+                className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-mute mb-6 block"
               >
-                INPUT SECRET CODE
+                TYPE SECRET CODE
               </label>
               <div className="relative">
                 <input
@@ -364,7 +376,9 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
                   type="text"
                   autoCapitalize="characters"
                   autoComplete="off"
-                  className="neo-input w-full rounded-2xl font-mono tracking-[0.5em] uppercase !text-center !text-3xl !py-6 outline-none focus:shadow-[inset_4px_4px_8px_rgba(163,177,198,0.6),inset_-4px_-4px_8px_rgba(255,255,255,1)]"
+                  className={`field-input font-mono tracking-[0.4em] uppercase !text-center !text-3xl !py-6 !bg-black/60 !border-white/10 focus:!border-cyan/50 ${
+                    error ? "error" : ""
+                  }`}
                   placeholder="------"
                   value={code}
                   onChange={(e) => {
@@ -374,14 +388,14 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
                 />
               </div>
               {error && (
-                <p className="mt-6 text-[0.7rem] text-rose-500 font-mono uppercase tracking-widest font-black" role="alert">
+                <p className="mt-6 text-[0.7rem] text-rose font-mono uppercase tracking-widest font-bold" role="alert">
                   {error}
                 </p>
               )}
             </div>
 
-            <button type="submit" className="neo-btn w-full !py-6 rounded-2xl font-black tracking-widest text-lg uppercase shadow-[6px_6px_12px_rgba(0,0,0,0.1),-6px_-6px_12px_rgba(255,255,255,0.8)] hover:text-cyan-600 transition-all">
-              CHECK ANSWER
+            <button type="submit" className="btn btn-primary w-full !py-6 font-black tracking-widest uppercase shadow-[0_0_30px_rgba(34,211,238,0.2)]">
+              CHECK MY ANSWER
             </button>
           </form>
         </section>
@@ -389,7 +403,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
       {/* Confirmation Section */}
       {phase === "confirm" && (
-        <section className="animate-fade-scale mt-6 font-body">
+        <section className="animate-fade-scale mt-8">
           <button
             type="button"
             className="btn-link !text-[0.65rem] font-black uppercase tracking-widest text-cyan/30 hover:text-cyan"
@@ -399,17 +413,17 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             {"<< GO BACK TO RIDDLE"}
           </button>
 
-          <p className="font-mono mt-8 text-[0.65rem] font-black uppercase tracking-[0.3em] text-violet">
+          <p className="font-mono mt-10 text-[0.65rem] font-black uppercase tracking-[0.3em] text-violet">
             LOCATION_CHECK
           </p>
-          <h2 className="font-display mt-2 text-[1.8rem] font-black leading-tight text-white tracking-tight uppercase">
+          <h2 className="font-display mt-2 text-[2rem] font-black leading-tight text-white tracking-tight uppercase mb-8">
             Are you here?
           </h2>
-          <p className="mt-2 text-sm text-mute font-light italic">
+          <p className="mt-2 text-sm text-mute font-light italic mb-8">
             Match this photo with your surroundings.
           </p>
 
-          <div className="glass-strong glow-border mt-8 overflow-hidden rounded-2xl border-t-2 border-t-violet/40 bg-black/40">
+          <div className="glass-strong glow-border overflow-hidden rounded-2xl border-t-2 border-t-violet/40 bg-black/40 mb-10">
             <div className="relative aspect-[16/10] bg-void">
               <img
                 src={venue.venueImageUrl}
@@ -421,14 +435,14 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
               <div className="absolute left-5 top-5">
                 <div className="chip !bg-violet/30 !border-violet/50 !text-white font-black tracking-widest text-[0.55rem] uppercase">Correct Code!</div>
               </div>
-              <div className="absolute bottom-0 left-0 right-0 p-5 bg-gradient-to-t from-black/90 to-transparent">
+              <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/90 to-transparent">
                 <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-cyan font-black shadow-black">
                   STOP :: {clueNumber} // STATUS :: FOUND
                 </p>
               </div>
             </div>
-            <div className="p-6">
-              <p className="text-[0.7rem] leading-relaxed text-mute font-mono uppercase tracking-tighter italic font-light">
+            <div className="p-8">
+              <p className="text-[0.75rem] leading-relaxed text-mute font-mono uppercase tracking-tighter italic font-light">
                 If this photo matches the place you are standing, click below to continue.
               </p>
             </div>
@@ -436,10 +450,10 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
 
           {advancing && (
             <div
-              className="animate-stamp mt-8 rounded-xl border border-lime/40 bg-lime/10 p-5 text-center shadow-[0_0_20px_rgba(52,211,153,0.1)]"
+              className="animate-stamp mt-8 rounded-xl border border-lime/40 bg-lime/10 p-6 text-center shadow-[0_0_20px_rgba(52,211,153,0.1)]"
               role="status"
             >
-              <p className="font-mono text-[0.75rem] font-black uppercase tracking-[0.3em] text-lime">
+              <p className="font-mono text-[0.8rem] font-black uppercase tracking-[0.3em] text-lime">
                 {isLast ? "MISSION COMPLETE!" : "STOP FOUND!"}
               </p>
               <p className="mt-2 text-[0.6rem] text-lime/70 font-mono tracking-widest uppercase animate-pulse">
@@ -450,10 +464,10 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             </div>
           )}
 
-          <div className="mt-8 grid gap-3 sm:grid-cols-2">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
             <button
               type="button"
-              className="btn btn-secondary w-full !py-5 font-black tracking-[0.2em] text-[0.65rem] uppercase"
+              className="btn btn-secondary w-full !py-6 font-black tracking-[0.2em] text-[0.7rem] uppercase"
               onClick={handleWrongPlace}
               disabled={advancing}
             >
@@ -461,7 +475,7 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
             </button>
             <button
               type="button"
-              className="btn btn-primary w-full !py-5 font-black tracking-[0.2em] text-[0.65rem] uppercase"
+              className="btn btn-primary w-full !py-6 font-black tracking-[0.2em] text-[0.7rem] uppercase"
               onClick={handleCorrectPlace}
               disabled={advancing}
             >
@@ -470,6 +484,43 @@ export function ParticipantHome({ teamId, onLogout }: ParticipantHomeProps) {
           </div>
         </section>
       )}
+
+      {/* Team Crew Info */}
+      <div className="mt-12 glass rounded-2xl p-8 border-t border-white/5 bg-black/10 mb-12">
+        <div className="flex items-center justify-between gap-3 mb-6">
+          <p className="font-mono text-[0.6rem] font-black uppercase tracking-[0.3em] text-magenta/70">
+            UNIT_ROSTER
+          </p>
+          <div className="h-px flex-1 bg-white/5" />
+        </div>
+
+        <div className="space-y-6">
+          <div className="flex items-center gap-4">
+             <div className="h-10 w-10 rounded-full bg-cyan/10 border border-cyan/30 flex items-center justify-center font-mono text-[0.7rem] text-cyan font-bold">LDR</div>
+             <div>
+                <p className="font-mono text-[0.55rem] text-mute uppercase tracking-widest font-bold">Team Leader</p>
+                <p className="font-display text-lg font-black text-white uppercase tracking-wide">{team.leaderName}</p>
+             </div>
+          </div>
+
+          <div className="pt-6 border-t border-white/5">
+             <p className="font-mono text-[0.6rem] text-mute uppercase tracking-widest mb-4 font-bold">Crew Members</p>
+             <div className="flex flex-wrap gap-3">
+                {team.members.map((m) => (
+                  <span
+                    key={m}
+                    className="rounded-lg border border-white/5 bg-white/5 px-3 py-1.5 font-mono text-[0.65rem] text-mute uppercase tracking-tighter hover:text-cyan transition-colors"
+                  >
+                    # {m}
+                  </span>
+                ))}
+                {team.members.length === 0 && (
+                  <span className="text-[0.65rem] font-mono text-mute/30 italic">No other members registered.</span>
+                )}
+             </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -13,9 +13,6 @@
   --color-lime: #34d399;
   --color-rose: #fb7185;
   --color-amber: #fbbf24;
-  --color-bg-neo: #e0e5ec;
-  --color-shadow-light: #ffffff;
-  --color-shadow-dark: #a3b1c6;
   --font-display: "Syne", system-ui, sans-serif;
   --font-body: "Outfit", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -78,8 +75,8 @@ body {
   margin: 0;
   min-height: 100dvh;
   font-family: var(--font-body);
-  color: #444;
-  background: var(--color-bg-neo);
+  color: var(--color-text);
+  background: var(--color-void);
   overflow-x: hidden;
 }
 
@@ -219,54 +216,40 @@ select:focus-visible {
   color: transparent;
 }
 
-/* ---------- Neomorphism ---------- */
-.neo-flat {
-  background: var(--color-bg-neo);
-  box-shadow: 9px 9px 16px var(--color-shadow-dark),
-             -9px -9px 16px var(--color-shadow-light);
+/* ---------- Glassmorphism ---------- */
+.glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s ease;
 }
 
-.neo-convex {
-  background: var(--color-bg-neo);
-  box-shadow: 9px 9px 16px var(--color-shadow-dark),
-             -9px -9px 16px var(--color-shadow-light);
-  transition: all 0.2s ease;
-}
-
-.neo-convex:hover {
-  box-shadow: 12px 12px 20px var(--color-shadow-dark),
-             -12px -12px 20px var(--color-shadow-light);
+.glass:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-2px);
 }
 
-.neo-concave {
-  background: var(--color-bg-neo);
-  box-shadow: inset 9px 9px 16px var(--color-shadow-dark),
-             inset -9px -9px 16px var(--color-shadow-light);
+.glass-strong {
+  background: rgba(5, 7, 15, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
-.neo-btn {
-  background: var(--color-bg-neo);
-  box-shadow: 6px 6px 12px var(--color-shadow-dark),
-             -6px -6px 12px var(--color-shadow-light);
-  color: #444;
-  font-weight: 600;
-  transition: all 0.2s ease;
-  border: none;
+.glass-cyan {
+  background: rgba(34, 211, 238, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(34, 211, 238, 0.2);
 }
 
-.neo-btn:active {
-  box-shadow: inset 4px 4px 8px var(--color-shadow-dark),
-             inset -4px -4px 8px var(--color-shadow-light);
-  transform: scale(0.98);
-}
-
-.neo-input {
-  background: var(--color-bg-neo);
-  box-shadow: inset 6px 6px 12px var(--color-shadow-dark),
-             inset -6px -6px 12px var(--color-shadow-light);
-  border: none;
-  color: #444;
+.glass-indigo {
+  background: rgba(99, 102, 241, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
 .glow-border {

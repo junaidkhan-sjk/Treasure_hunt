@@ -13,8 +13,8 @@ export function BrandMark({
         : "h-11 w-11 text-xs";
 
   return (
-    <div className={`${dim} brand-mark shrink-0 ${className} !bg-[var(--color-bg-neo)] !border-none shadow-[4px_4px_8px_rgba(0,0,0,0.1),-4px_-4px_8px_rgba(255,255,255,0.9)]`} aria-hidden="true">
-      <span className="text-cyan-600 font-black">FH</span>
+    <div className={`${dim} brand-mark shrink-0 ${className}`} aria-hidden="true">
+      <span>FH</span>
     </div>
   );
 }
